@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('salaries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users');
-            $table->integer('type');
+            $table->foreignId('type')->constrained('salary_type_settings'); // menyimpan data gaji seperti thr atau bulanan
             $table->float('rate');
             $table->date('efective_date');
             $table->timestamps();

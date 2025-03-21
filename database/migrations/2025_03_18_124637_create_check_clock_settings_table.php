@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->integer('type');
+            $table->string('coordinates')->nullable();
+            $table->string('radius')->nullable();
             $table->timestamps();
         });
     }

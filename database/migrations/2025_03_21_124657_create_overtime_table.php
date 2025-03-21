@@ -11,11 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('letter_formats', function (Blueprint $table) {
+        Schema::create('overtime', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('content'); // berisi kode untuk peletakkan input pada template surat, tidak hanya peletakkan input tapi format dalam encoding tertentu
-            $table->integer('status'); // perlu ditanya lebih lanjut
+            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('overtime_setting_id')->constrained('overtime_settings');
+            $table->date('date');
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->string('payroll');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -26,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('letter_formats');
+        Schema::dropIfExists('overtime');
     }
 };

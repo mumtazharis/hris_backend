@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('check_clocks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users');
-            $table->integer('check_clock_type');
+            $table->string('check_clock_type'); // berisi in, out, break_start, break_end
+            $table->date('check_clock_date');
             $table->time('check_clock_time');
             $table->timestamps();
         });

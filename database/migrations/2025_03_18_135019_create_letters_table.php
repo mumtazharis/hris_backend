@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('letter_format_id')->constrained('letter_formats');
             $table->foreignId('user_id')->constrained('users');
-            $table->string('name');
+            $table->string('name'); // perlu ditanyakan lebih lanjut
+            $table->text('content'); // berisi kode json/ sejenisnya yang menyimpan data inputan yang akan ditampilkan pada halaman bukan sebagai satu dokumen 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

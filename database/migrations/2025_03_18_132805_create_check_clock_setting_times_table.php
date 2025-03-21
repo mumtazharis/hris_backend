@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('ck_setting_id')->constrained('check_clock_settings');
             $table->date('day');
             $table->time('clock_in');
-            $table->time('clock-_ut');
+            $table->time('clock_out');
             $table->time('break_start');
             $table->time('break_end');
             $table->timestamps();
