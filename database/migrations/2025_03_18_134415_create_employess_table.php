@@ -29,6 +29,9 @@ return new class extends Migration
             $table->string('citizenship');
             $table->char('gender');
             $table->string('blood_type');
+            $table->date('join_date');
+            $table->date('resign_date');
+            $table->string('employee_photo');
             $table->string('employee_status');
             $table->timestamps();
         });
