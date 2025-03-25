@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users');
             $table->decimal('amount', 10, 2);
+            $table->string('currency');
             $table->date('start_date');
             $table->date('end_date');
             $table->date('deadline');
