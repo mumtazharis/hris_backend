@@ -1,4 +1,4 @@
-### Nama Kelompok
+### Kelompok Kuli Digital
 
 1. Ahmad Mumtaz Haris (2241720136/01)
 2. Lucky Kurniawan Langoday (2241720168/12)
