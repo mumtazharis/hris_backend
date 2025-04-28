@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login'])->name('login');
+    Route::post('loginWithGoogle', [AuthController::class, 'loginWithGoogle'])->name('login_google');
 });
 
 Route::middleware('auth:sanctum')->group(function () {

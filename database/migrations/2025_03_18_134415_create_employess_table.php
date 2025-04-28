@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('employess', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users');
-            $table->string('nik');
             $table->foreignId('ck_setting_id')->constrained('check_clock_settings');
+            $table->string('nik');
             $table->string('first_name');
             $table->string('last_name');
             $table->foreignId('position_id')->constrained('positions');
