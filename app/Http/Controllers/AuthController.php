@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Google_Client;
 use Exception;
 
@@ -61,7 +62,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out']);
     }
 
-    public function loginWithGoogle(Request $request)
+    public function signupWithGoogle(Request $request)
     {
         $idToken = $request->input('id_token');  // Ambil ID Token dari form-data atau JSON
 
@@ -82,8 +83,13 @@ class AuthController extends Controller
                     $emailUser = User::where('email', $email)->first();
                     if (!$emailUser){
                         // Jika pengguna belum terdaftar, buat akun baru tanpa password
+                        do {
+                            $randomPhone = strtoupper(Str::random(12));
+                        } while (User::where('phone', $randomPhone)->exists());
+                        
                         $user = User::create([
                             'email' => $email,
+                            'phone' => $randomPhone,
                             'google_id' => $userId,
                             'password' => null,  // Biarkan password null
                         ]);
@@ -105,4 +111,48 @@ class AuthController extends Controller
             return response()->json(['error' => 'Verification failed: ' . $e->getMessage()], 400);
         }
     }
+
+    public function loginWithGoogle(Request $request)
+    {
+        $idToken = $request->input('id_token');  // Ambil ID Token dari form-data atau JSON
+
+        $client = new \Google_Client(['client_id' => config('services.google.client_id')]);
+
+        try {
+            $payload = $client->verifyIdToken($idToken);
+
+            if ($payload) {
+                // ID Token valid, ambil informasi pengguna
+                $userId = $payload['sub'];   // ID pengguna Google
+                $email = $payload['email'];  // Email pengguna
+
+                // Cari user berdasarkan google_id
+                $user = User::where('google_id', $userId)->first();
+
+                if (!$user) {
+                    // Jika tidak ketemu berdasarkan google_id, coba cek berdasarkan email
+                    $user = User::where('email', $email)->first();
+
+                    if ($user) {
+                        // Kalau email cocok tapi belum punya google_id, update google_id
+                        $user->google_id = $userId;
+                        $user->save();
+                    } else {
+                        // Kalau tidak ada user, berarti belum terdaftar
+                        return response()->json(['error' => 'User not registered. Please sign up first.'], 404);
+                    }
+                }
+
+                // Berikan token
+                return response()->json([
+                    'token' => $user->createToken('API TOKEN')->plainTextToken,
+                ]);
+            } else {
+                return response()->json(['error' => 'Invalid ID token'], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Verification failed: ' . $e->getMessage()], 400);
+        }
+    }
+
 }
