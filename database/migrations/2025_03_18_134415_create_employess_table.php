@@ -11,28 +11,29 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('employess', function (Blueprint $table) {
+        Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('ck_setting_id')->constrained('check_clock_settings');
-            $table->string('nik');
+            $table->foreignId('ck_setting_id')->nullable()->constrained('check_clock_settings');
+            $table->string('employee_id')->unique();
+            $table->string('nik')->nullable();
             $table->string('first_name');
             $table->string('last_name');
-            $table->foreignId('position_id')->constrained('positions');
-            $table->foreignId('department_id')->constrained('departments');
-            $table->string('address');
-            $table->string('contact');
-            $table->string('birth_place');
-            $table->date('birth_date');
-            $table->string('religion');
-            $table->string('marital_status');
-            $table->string('citizenship');
-            $table->char('gender');
-            $table->string('blood_type');
-            $table->date('join_date');
-            $table->date('resign_date');
-            $table->string('employee_photo');
-            $table->string('employee_status');
+            $table->foreignId('position_id')->nullable()->constrained('positions');
+            $table->string('address')->nullable();
+            $table->string('email')->unique()->nullable();
+            $table->string('phone')->unique()->nullable();
+            $table->string('birth_place')->nullable();
+            $table->date('birth_date')->nullable();
+            $table->string('religion')->nullable();
+            $table->string('marital_status')->nullable();
+            $table->string('citizenship')->nullable();
+            $table->char('gender')->nullable();
+            $table->string('blood_type')->nullable();
+            $table->date('join_date')->nullable();
+            $table->date('resign_date')->nullable();
+            $table->string('employee_photo')->nullable();
+            $table->string('employee_status')->nullable();
             $table->timestamps();
         });
     }

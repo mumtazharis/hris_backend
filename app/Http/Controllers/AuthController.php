@@ -2,34 +2,84 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Employee;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Google_Client;
 use Exception;
-
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
         $request->validate([
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'required|numeric|digits_between:10,15|unique:users,phone',
-            'password' => 'nullable|sometimes|required_without:google_id|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/|regex:/[\W_]/|confirmed',
-            'google_id' => 'nullable|sometimes|required_without:password',
+            'password' => 'required|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/|regex:/[\W_]/|confirmed',
         ]);
         $user = User::create([
-            // 'name' => $request->name,
             'email' => $request->email,
-            'phone' => $request->phone,
             'password' => Hash::make($request->password),
+            'role' => 'admin',
+            'is_profile_complete' => false,
         ]);
 
-        return response()->json(['token' => $user->createToken('API Token')->plainTextToken]);
+        return response()->json(['token' => $user->createToken('API Token')->plainTextToken, 'is_profile_complete' => $user->is_profile_complete]);
+    }
+
+    public function completeRegister(Request $request)
+    {
+        
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        
+        $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'phone' => 'required|numeric|digits_between:10,15|unique:users,phone',
+            'company_name' => 'required|string|max:50',
+            Rule::unique('users', 'phone')->ignore($user->id),
+        ]);
+
+        
+ 
+        DB::beginTransaction();
+
+        try {
+            do {
+                $randomCompanyId = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+            } while (Company::where('company_id', $randomCompanyId)->exists());    
+
+            $company = Company::create([
+                'name' => $request->company_name,
+                'company_id' => $randomCompanyId,
+            ]);
+
+            $user->update([
+                'company_id' => $company->id,
+                'full_name' => $request->first_name . ' ' . $request->last_name,
+                'phone' => $request->phone,
+                'is_profile_complete' => true,
+            ]);
+    
+            // Commit jika semua berhasil
+            DB::commit();
+    
+            return response()->json(['message' => 'Data diri berhasil dilengkapi.']);
+    
+        } catch (\Exception $e) {
+            // Rollback jika ada error
+            DB::rollBack();
+            return response()->json(['error' => 'Terjadi kesalahan saat melengkapi data.',    'message' => $e->getMessage()], 500);
+        }
     }
 
     public function login(Request $request){
@@ -52,7 +102,10 @@ class AuthController extends Controller
         }
     
         // Jika login berhasil, buat token dan kirimkan sebagai response
-        return response()->json(['token' => $user->createToken('API Token')->plainTextToken]);
+        return response()->json([
+            'token' => $user->createToken('API Token')->plainTextToken,
+            'is_profile_complete' => $user->is_profile_complete,
+        ]);
     }
     
 
@@ -83,15 +136,12 @@ class AuthController extends Controller
                     $emailUser = User::where('email', $email)->first();
                     if (!$emailUser){
                         // Jika pengguna belum terdaftar, buat akun baru tanpa password
-                        do {
-                            $randomPhone = strtoupper(Str::random(12));
-                        } while (User::where('phone', $randomPhone)->exists());
-                        
+
                         $user = User::create([
                             'email' => $email,
-                            'phone' => $randomPhone,
                             'google_id' => $userId,
                             'password' => null,  // Biarkan password null
+                            'role' => 'admin',
                         ]);
                     } else {
                         // Jika email sudah ada, update dengan google_id
@@ -102,7 +152,8 @@ class AuthController extends Controller
             
                 }
                 return response()->json([   
-                    'token' => $user->createToken('API TOKEN')->plainTextToken,
+                    'token' => $user->createToken('API Token')->plainTextToken,
+                    'is_profile_complete' => $user->is_profile_complete,
                 ]);
             } else {
                 return response()->json(['error' => 'Invalid ID token'], 400);
@@ -145,7 +196,8 @@ class AuthController extends Controller
 
                 // Berikan token
                 return response()->json([
-                    'token' => $user->createToken('API TOKEN')->plainTextToken,
+                    'token' => $user->createToken('API Token')->plainTextToken,
+                    'is_profile_complete' => $user->is_profile_complete,
                 ]);
             } else {
                 return response()->json(['error' => 'Invalid ID token'], 400);
