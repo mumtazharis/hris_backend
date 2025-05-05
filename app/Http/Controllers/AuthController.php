@@ -2,42 +2,209 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Employee;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Google_Client;
+use Exception;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/|regex:/[\W_]/|confirmed',
         ]);
-
         $user = User::create([
-            'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'role' => 'admin',
+            'is_profile_complete' => false,
         ]);
 
-        return response()->json(['token' => $user->createToken('API Token')->plainTextToken]);
+        return response()->json(['token' => $user->createToken('API Token')->plainTextToken, 'is_profile_complete' => $user->is_profile_complete]);
     }
 
-    public function login(Request $request)
+    public function completeRegister(Request $request)
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
+        
+        $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'phone' => 'required|numeric|digits_between:10,15|unique:users,phone',
+            'company_name' => 'required|string|max:50',
+            Rule::unique('users', 'phone')->ignore($user->id),
+        ]);
 
-        return response()->json(['token' => auth()->user()->createToken('API Token')->plainTextToken]);
+        
+ 
+        DB::beginTransaction();
+
+        try {
+            do {
+                $randomCompanyId = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+            } while (Company::where('company_id', $randomCompanyId)->exists());    
+
+            $company = Company::create([
+                'name' => $request->company_name,
+                'company_id' => $randomCompanyId,
+            ]);
+
+            $user->update([
+                'company_id' => $company->id,
+                'full_name' => $request->first_name . ' ' . $request->last_name,
+                'phone' => $request->phone,
+                'is_profile_complete' => true,
+            ]);
+    
+            // Commit jika semua berhasil
+            DB::commit();
+    
+            return response()->json(['message' => 'Data diri berhasil dilengkapi.']);
+    
+        } catch (\Exception $e) {
+            // Rollback jika ada error
+            DB::rollBack();
+            return response()->json(['error' => 'Terjadi kesalahan saat melengkapi data.',    'message' => $e->getMessage()], 500);
+        }
     }
+
+    public function login(Request $request){
+        // Ambil username dan password dari request
+        $username = $request->input('username'); 
+        $password = $request->input('password');
+    
+        // Periksa apakah username mengandung "@" (untuk email)
+        if (strpos($username, '@') !== false) {
+            // Jika username mengandung "@" berarti itu email
+            $user = User::where('email', $username)->first();
+        } else {
+            // Jika username tidak mengandung "@" berarti itu nomor telepon
+            $user = User::where('phone', $username)->first();
+        }
+    
+        // Jika user tidak ditemukan atau password salah
+        if (!$user || !Hash::check($password, $user->password)) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+    
+        // Jika login berhasil, buat token dan kirimkan sebagai response
+        return response()->json([
+            'token' => $user->createToken('API Token')->plainTextToken,
+            'is_profile_complete' => $user->is_profile_complete,
+        ]);
+    }
+    
 
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();
         return response()->json(['message' => 'Logged out']);
     }
+
+    public function signupWithGoogle(Request $request)
+    {
+        $idToken = $request->input('id_token');  // Ambil ID Token dari form-data atau JSON
+
+        $client = new Google_Client(['client_id' => config('services.google.client_id')]);
+
+        try {
+            $payload = $client->verifyIdToken($idToken);
+            
+            if ($payload) {
+                // ID Token valid, ambil informasi pengguna
+                $userId = $payload['sub'];  // ID pengguna Google
+                $email = $payload['email'];  // Email pengguna
+
+                // Cek jika pengguna sudah terdaftar berdasarkan google_id
+                $user = User::where('google_id', $userId)->first();
+
+                if (!$user) {
+                    $emailUser = User::where('email', $email)->first();
+                    if (!$emailUser){
+                        // Jika pengguna belum terdaftar, buat akun baru tanpa password
+
+                        $user = User::create([
+                            'email' => $email,
+                            'google_id' => $userId,
+                            'password' => null,  // Biarkan password null
+                            'role' => 'admin',
+                        ]);
+                    } else {
+                        // Jika email sudah ada, update dengan google_id
+                        $emailUser->google_id = $userId;
+                        $emailUser->save();
+                        $user = $emailUser;
+                    }
+            
+                }
+                return response()->json([   
+                    'token' => $user->createToken('API Token')->plainTextToken,
+                    'is_profile_complete' => $user->is_profile_complete,
+                ]);
+            } else {
+                return response()->json(['error' => 'Invalid ID token'], 400);
+            }
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Verification failed: ' . $e->getMessage()], 400);
+        }
+    }
+
+    public function loginWithGoogle(Request $request)
+    {
+        $idToken = $request->input('id_token');  // Ambil ID Token dari form-data atau JSON
+
+        $client = new \Google_Client(['client_id' => config('services.google.client_id')]);
+
+        try {
+            $payload = $client->verifyIdToken($idToken);
+
+            if ($payload) {
+                // ID Token valid, ambil informasi pengguna
+                $userId = $payload['sub'];   // ID pengguna Google
+                $email = $payload['email'];  // Email pengguna
+
+                // Cari user berdasarkan google_id
+                $user = User::where('google_id', $userId)->first();
+
+                if (!$user) {
+                    // Jika tidak ketemu berdasarkan google_id, coba cek berdasarkan email
+                    $user = User::where('email', $email)->first();
+
+                    if ($user) {
+                        // Kalau email cocok tapi belum punya google_id, update google_id
+                        $user->google_id = $userId;
+                        $user->save();
+                    } else {
+                        // Kalau tidak ada user, berarti belum terdaftar
+                        return response()->json(['error' => 'User not registered. Please sign up first.'], 404);
+                    }
+                }
+
+                // Berikan token
+                return response()->json([
+                    'token' => $user->createToken('API Token')->plainTextToken,
+                    'is_profile_complete' => $user->is_profile_complete,
+                ]);
+            } else {
+                return response()->json(['error' => 'Invalid ID token'], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Verification failed: ' . $e->getMessage()], 400);
+        }
+    }
+
 }

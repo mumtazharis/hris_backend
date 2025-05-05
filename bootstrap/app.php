@@ -12,10 +12,21 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->renderable(function (Illuminate\Validation\ValidationException $e, $request) {
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
+        });
+    
         $exceptions->renderable(function (Illuminate\Auth\AuthenticationException $e, $request) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         });
-    })->create();
+ 
+    })
+    ->create();

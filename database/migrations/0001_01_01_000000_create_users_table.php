@@ -13,10 +13,14 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->string('role')->default('user');
+            $table->foreignId('company_id')->nullable()->constrained('companies');
+            $table->string('full_name')->nullable();
+            $table->string('email')->unique()->nullable();
+            $table->string('phone')->unique()->nullable();
+            $table->string('password')->nullable();
+            $table->string('google_id')->unique()->nullable();
+            $table->enum('role', ['admin', 'employee'])->default('employee');
+            $table->boolean('is_profile_complete')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });
