@@ -58,14 +58,14 @@ class CheckClockController extends Controller
     public function update(Request $request, CheckClock $checkClock)
     {
         $validator = Validator::make($request->all(), [
-            'employee_id' => 'required',
-            'check_clock_type' => 'required|string|in:in,out,break_start,break_end,permit,sick,leave', // Enum validation for 'in' and 'out'
-            'check_clock_date' => 'required|date',
-            'check_clock_time' => 'required|date_format:H:i:s', // Corrected to validate time format
+            'employee_id' => 'sometimes|required',
+            'check_clock_type' => 'sometimes|required|string|in:in,out,break_start,break_ended,permit,sick,leave', // Enum validation for 'in' and 'out'
+            'check_clock_date' => 'sometimes|required|date',
+            'check_clock_time' => 'sometimes|required|date_format:H:i:s', // Corrected to validate time format
             'latitude' => 'sometimes|string',
             'longitude' => 'sometimes|string',
             'evidence' => 'sometimes|string',
-            'status' => 'required|string|in:pending,approved,rejected', // Enum validation for status
+            'status' => 'sometimes|required|string|in:pending,approved,rejected', // Enum validation for status
         ]);
 
         if ($validator->fails()) {

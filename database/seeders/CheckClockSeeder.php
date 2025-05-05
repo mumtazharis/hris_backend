@@ -33,7 +33,7 @@ class CheckClockSeeder extends Seeder
                     'latitude' => fake()->latitude,
                     'longitude' => fake()->longitude,
                     'evidence' => fake()->imageUrl(),
-                    'status' => 'aprrove', // Ensure this matches the allowed values in the database constraint
+                    'status' => 'approved', // Ensure this matches the allowed values in the database constraint
                 ]);
             }
         }

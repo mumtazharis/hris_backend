@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('latitude')->nullable(); // berisi koordinat lokasi absensi seperti gps, dll
             $table->string('longitude')->nullable(); // berisi koordinat lokasi absensi seperti gps, dll
             $table->string('evidence')->nullable(); // berisi bukti absensi seperti foto, dll
-            $table->enum('status', ['aprrove', 'pending', 'reject'])->default('pending');
+            $table->enum('status', ['approved', 'pending', 'rejected'])->default('pending');
             $table->timestamps();
         });
     }
