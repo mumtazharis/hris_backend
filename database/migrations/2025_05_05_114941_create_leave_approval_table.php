@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('check_clocks', function (Blueprint $table) {
+        Schema::create('leave_approval', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
-            $table->string('check_clock_type'); // berisi in, out, break_start, break_end
-            $table->date('check_clock_date');
-            $table->time('check_clock_time');
             $table->timestamps();
         });
     }
@@ -26,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('check_clocks');
+        Schema::dropIfExists('leave_approval');
     }
 };

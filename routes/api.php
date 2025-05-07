@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CheckClockController;
+use App\Http\Controllers\CheckClockSettingController;
+use App\Http\Controllers\CheckClockSettingTimesController;
 
 Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -19,4 +22,9 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::get('/users/{id}', [UserController::class, 'show']);
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+    // Resource routes
+    Route::resource('check-clocks', CheckClockController::class);
+    Route::resource('check-clock-settings', CheckClockSettingController::class);
+    Route::resource('check-clock-setting-times', CheckClockSettingTimesController::class);
 });

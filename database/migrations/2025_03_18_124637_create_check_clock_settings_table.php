@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('check_clock_settings', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->integer('type');
-            $table->string('coordinates')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
             $table->string('radius')->nullable();
             $table->timestamps();
         });
