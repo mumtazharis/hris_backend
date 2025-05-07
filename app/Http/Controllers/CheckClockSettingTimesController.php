@@ -38,9 +38,10 @@ class CheckClockSettingTimesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(CheckClockSettingTimes $checkClockSettingTimes)
+    public function show($id)
     {
-        return response()->json($checkClockSettingTimes);
+        $record = CheckClockSettingTimes::find($id);
+        return response()->json($record);
     }
 
     /**
@@ -51,15 +52,15 @@ class CheckClockSettingTimesController extends Controller
         $validated = $request->validate([
             'ck_setting_id' => 'required|exists:check_clock_settings,id',
             'day' => 'required|string|max:255',
-            'clock_in' => 'required|date_format:H:i',
-            'clock_out' => 'required|date_format:H:i|after:clock_in',
-            'break_start' => 'required|date_format:H:i|after:clock_in|before:clock_out',
-            'break_end' => 'required|date_format:H:i|after:break_start|before:clock_out',
+            'clock_in' => 'required|date_format:H:i:s',
+            'clock_out' => 'required|date_format:H:i:s|after:clock_in',
+            'break_start' => 'required|date_format:H:i:s|after:clock_in|before:clock_out',
+            'break_end' => 'required|date_format:H:i:s|after:break_start|before:clock_out',
         ]);
 
         $checkClockSettingTimes->update($validated);
-
-        return response()->json($checkClockSettingTimes);
+        
+        return response()->json($validated);
     }
 
     /**

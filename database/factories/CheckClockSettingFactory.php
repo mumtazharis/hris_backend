@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\CheckClockSetting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CheckClockSettingFactory extends Factory
