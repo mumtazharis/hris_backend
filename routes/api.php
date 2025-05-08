@@ -18,6 +18,7 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('mail-test', [MailTest::class, 'store'])->name('mail_test');
     Route::post('reset-password', [ResetPasswordController::class, 'reqResetPassword'])->name('reset_password');
     Route::post('reset-process', [ResetPasswordController::class, 'resetPassword'])->name('reset_password_process');
+    Route::post('token-checker', [ResetPasswordController::class, 'checkToken'])->name('check_token');
 });
 
 Route::middleware('auth:sanctum','role:employee,admin')->group(function () {

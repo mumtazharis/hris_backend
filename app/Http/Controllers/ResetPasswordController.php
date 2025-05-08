@@ -37,7 +37,7 @@ class ResetPasswordController extends Controller
         
         $url = 'http://localhost:3000/';
         
-        $resetUrl = $url . '/set-new-password?token=' . $resetToken;
+        $resetUrl = $url . '/sign-in/set-new-password?token=' . $resetToken;
 
         Mail::to($user->email)->send(new ResetPassword($user->email, $resetUrl));    
         // Mail::to($user)->send(new ResetPassword($user, $resetUrl));    
@@ -57,7 +57,7 @@ class ResetPasswordController extends Controller
             ->first();
 
         if (!$user) {
-            return response()->json(['message' => 'Invalid or expired token'], 400);
+            return response()->json(['message' => 'Invalid or expired token', 'is_expired' => true], 400);
         }
 
         // Update the user's password
@@ -66,6 +66,23 @@ class ResetPasswordController extends Controller
         $user->reset_token_expire = null;
         $user->save();
 
-        return response()->json(['message' => 'Password reset successfully'], 200);
+        return response()->json(['message' => 'Password reset successfully', 'is_expired' => false], 200);
+    }
+
+    public function checkToken(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        $user = User::where('reset_token', $request->token)
+            ->where('reset_token_expire', '>', now())
+            ->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid or expired token', 'is_expired' => true], 400);
+        }
+
+        return response()->json(['message' => 'Valid token', 'is_expired' => false], 200);
     }
 }
