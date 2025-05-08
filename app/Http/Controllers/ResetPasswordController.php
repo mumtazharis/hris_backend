@@ -20,7 +20,7 @@ class ResetPasswordController extends Controller
 
         $user = User::where('email', $request->email)->first();
         if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
+            return response()->json(['errors' => ['message' => 'Email not found']], 404);
         }
         // Generate a unique reset token
         do {
@@ -57,7 +57,7 @@ class ResetPasswordController extends Controller
             ->first();
 
         if (!$user) {
-            return response()->json(['message' => 'Invalid or expired token', 'is_expired' => true], 400);
+            return response()->json(['errors' => ['message' => 'Invalid or expired token', 'is_expired' => true]], 400);
         }
 
         // Update the user's password
@@ -80,7 +80,7 @@ class ResetPasswordController extends Controller
             ->first();
 
         if (!$user) {
-            return response()->json(['message' => 'Invalid or expired token', 'is_expired' => true], 400);
+            return response()->json(['errors' => ['message' => 'Invalid or expired token', 'is_expired' => true]], 400);
         }
 
         return response()->json(['message' => 'Valid token', 'is_expired' => false], 200);
