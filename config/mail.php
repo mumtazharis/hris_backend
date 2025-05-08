@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    'default' => env('MAIL_MAILER', 'resend'),
 
     /*
     |--------------------------------------------------------------------------
@@ -34,8 +34,14 @@ return [
     |            "failover", "roundrobin"
     |
     */
-
+    
     'mailers' => [
+        
+        // start resend transport
+        'resend' => [
+            'transport' => 'resend'
+        ],
+        // end resend transport
 
         'smtp' => [
             'transport' => 'smtp',
@@ -94,6 +100,7 @@ return [
                 'postmark',
             ],
         ],
+
 
     ],
 

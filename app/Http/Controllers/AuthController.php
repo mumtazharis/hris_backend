@@ -98,7 +98,7 @@ class AuthController extends Controller
     
         // Jika user tidak ditemukan atau password salah
         if (!$user || !Hash::check($password, $user->password)) {
-            return response()->json(['message' => 'Invalid E-mail or Password'], 401);
+            return response()->json(['errors' => ['message' => 'Invalid E-mail or Password']], 401);
         }
     
         // Jika login berhasil, buat token dan kirimkan sebagai response
