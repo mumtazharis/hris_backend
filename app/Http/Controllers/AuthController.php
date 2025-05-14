@@ -12,6 +12,8 @@ use Google_Client;
 use Exception;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -26,6 +28,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'role' => 'admin',
             'is_profile_complete' => false,
+            'auth_provider' => 'local',
         ]);
 
         return response()->json(['token' => $user->createToken('API Token')->plainTextToken, 'is_profile_complete' => $user->is_profile_complete]);
@@ -98,7 +101,7 @@ class AuthController extends Controller
     
         // Jika user tidak ditemukan atau password salah
         if (!$user || !Hash::check($password, $user->password)) {
-            return response()->json(['message' => 'Invalid E-mail or Password'], 401);
+            return response()->json(['errors' => ['message' => 'Invalid E-mail or Password']], 401);
         }
     
         // Jika login berhasil, buat token dan kirimkan sebagai response
@@ -117,10 +120,9 @@ class AuthController extends Controller
 
     public function signupWithGoogle(Request $request)
     {
-        $idToken = $request->input('id_token');  // Ambil ID Token dari form-data atau JSON
-
+        $idToken = $request->input('id_token');  
         $client = new Google_Client(['client_id' => config('services.google.client_id')]);
-
+           
         try {
             $payload = $client->verifyIdToken($idToken);
             
@@ -142,6 +144,7 @@ class AuthController extends Controller
                             'google_id' => $userId,
                             'password' => null,  // Biarkan password null
                             'role' => 'admin',
+                            'auth_provider' => 'google',
                         ]);
                     } else {
                         // Jika email sudah ada, update dengan google_id
@@ -156,10 +159,10 @@ class AuthController extends Controller
                     'is_profile_complete' => $user->is_profile_complete,
                 ]);
             } else {
-                return response()->json(['error' => 'Invalid ID token'], 400);
+                return response()->json(['errors' => ['message' => 'Invalid ID Token']], 400);
             }
         } catch (Exception $e) {
-            return response()->json(['error' => 'Verification failed: ' . $e->getMessage()], 400);
+            return response()->json(['errors' => ['message' => 'Verification failed: ' . $e->getMessage()]], 400);
         }
     }
 
@@ -167,7 +170,7 @@ class AuthController extends Controller
     {
         $idToken = $request->input('id_token');  // Ambil ID Token dari form-data atau JSON
 
-        $client = new \Google_Client(['client_id' => config('services.google.client_id')]);
+        $client = new Google_Client(['client_id' => config('services.google.client_id')]);
 
         try {
             $payload = $client->verifyIdToken($idToken);
@@ -190,7 +193,7 @@ class AuthController extends Controller
                         $user->save();
                     } else {
                         // Kalau tidak ada user, berarti belum terdaftar
-                        return response()->json(['error' => 'User not registered. Please sign up first.'], 404);
+                        return response()->json(['errors' => ['message' => 'User not registered. Please sign up first.']], 404);
                     }
                 }
 
@@ -200,10 +203,10 @@ class AuthController extends Controller
                     'is_profile_complete' => $user->is_profile_complete,
                 ]);
             } else {
-                return response()->json(['error' => 'Invalid ID token'], 400);
+                return response()->json(['errors' => ['message' => 'Invalid ID Token']], 400);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Verification failed: ' . $e->getMessage()], 400);
+            return response()->json(['errors' => ['message' => 'Verification failed: ' . $e->getMessage()]], 400);
         }
     }
 
