@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'admin',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 1,
@@ -31,6 +32,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 1,
@@ -40,6 +42,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 1,
@@ -49,6 +52,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 1,
@@ -58,6 +62,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 2,
@@ -67,6 +72,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 2,
@@ -76,6 +82,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'admin',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 2,
@@ -85,6 +92,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 2,
@@ -94,6 +102,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
             [
                 'company_id' => 2,
@@ -103,6 +112,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
                 'is_profile_complete' => true,
+                'auth_provider' => 'local',
             ],
         ];
 

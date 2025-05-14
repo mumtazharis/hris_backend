@@ -22,6 +22,10 @@ class ResetPasswordController extends Controller
         if (!$user) {
             return response()->json(['errors' => ['message' => 'Email not found']], 404);
         }
+
+        if ($user->auth_provider !== 'local') {
+            return response()->json(['errors' => ['message' => 'This account uses a third-party login — no password to reset!']], 400);
+        }
         // Generate a unique reset token
         do {
             $resetToken = bin2hex(random_bytes(32));

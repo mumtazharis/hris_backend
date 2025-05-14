@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('google_id')->unique()->nullable();
             $table->enum('role', ['admin', 'employee'])->default('employee');
             $table->boolean('is_profile_complete')->default(false);
+            $table->enum('auth_provider', ['google', 'local'])->default('local');
             $table->string('reset_token')->nullable();
             $table->timestamp('reset_token_expire')->nullable();
             $table->timestamps();
