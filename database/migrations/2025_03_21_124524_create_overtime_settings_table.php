@@ -14,7 +14,12 @@ return new class extends Migration
         Schema::create('overtime_settings', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            // $table->string('formula_id')->constraint('overtime_formula');
             $table->string('type');
+            $table->string('category');
+            $table->string('working_days');
+            $table->string('calculation');
+            $table->string('rate');
             $table->timestamps();
         });
     }

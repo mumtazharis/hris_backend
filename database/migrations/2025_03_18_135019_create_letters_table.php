@@ -14,9 +14,13 @@ return new class extends Migration
         Schema::create('letters', function (Blueprint $table) {
             $table->id();
             $table->foreignId('letter_format_id')->constrained('letter_formats');
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('employee_id')->constrained('employees');
+            $table->string('document_id')->unique();
             $table->string('name'); // perlu ditanyakan lebih lanjut
-            $table->text('content'); // berisi kode json/ sejenisnya yang menyimpan data inputan yang akan ditampilkan pada halaman bukan sebagai satu dokumen 
+            $table->text('content')->nullable(); // berisi kode json/ sejenisnya yang menyimpan data inputan yang akan ditampilkan pada halaman bukan sebagai satu dokumen 
+            $table->text('file_path')->nullable();
+            $table->date('issue_date');
+            $table->date('expiry_date');
             $table->timestamps();
             $table->softDeletes();
         });
