@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('leave_approval', function (Blueprint $table) {
-            $table->id();
+        Schema::create('overtime_formula', function (Blueprint $table) {
+            $table->foreignId('setting_id')->constrained('overtime_settings');
+            $table->integer('hour_start');
+            $table->integer('hour_end')->nullable();
+            $table->string('formula');
             $table->timestamps();
         });
     }
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('leave_approval');
+        Schema::dropIfExists('overtime_formula');
     }
 };

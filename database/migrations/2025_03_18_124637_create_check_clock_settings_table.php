@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('longitude')->nullable();
             $table->string('radius')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

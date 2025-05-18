@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('citizenship')->nullable();
             $table->char('gender')->nullable();
             $table->string('blood_type')->nullable();
+            $table->string('salary')->nullable();
             $table->date('join_date')->nullable();
             $table->date('resign_date')->nullable();
             $table->string('employee_photo')->nullable();

@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('overtime', function (Blueprint $table) {
+        Schema::create('absent_detail_cc', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees');
-            $table->foreignId('overtime_setting_id')->constrained('overtime_settings');
-            $table->date('date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->string('payroll');
+            $table->foreignId('ck_id')->constrained('check_clocks');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->string('evidence');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('overtime');
+        Schema::dropIfExists('absent_detail_cc');
     }
 };

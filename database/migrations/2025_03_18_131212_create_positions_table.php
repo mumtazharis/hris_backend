@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
-            $table->decimal('salary', 10, 2)->default(0);
+            // $table->decimal('salary', 10, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -14,14 +14,12 @@ return new class extends Migration
         Schema::create('check_clocks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees');
-            $table->string('check_clock_type'); // berisi in, out, break_start, break_end, sick, permit, leave(cuti)
+            $table->foreignId('approver_id')->constrained('users');
             $table->date('check_clock_date');
-            $table->time('check_clock_time');
-            $table->string('latitude')->nullable(); // berisi koordinat lokasi absensi seperti gps, dll
-            $table->string('longitude')->nullable(); // berisi koordinat lokasi absensi seperti gps, dll
-            $table->string('evidence')->nullable(); // berisi bukti absensi seperti foto, dll
-            $table->enum('status', ['approved', 'pending', 'rejected'])->default('pending');
+            $table->enum('status', ['present', 'absent'])->default('present');
+            $table->enum('status_approval', ['approved', 'pending', 'rejected'])->default('pending');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->time('break_start');
             $table->time('break_end');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
