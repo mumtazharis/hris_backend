@@ -16,61 +16,61 @@ class PositionSeeder extends Seeder
         Position::create([
             'name' => 'CEO',
             'department_id' => 1,
-            'salary' => 150000.00,
+            // 'salary' => 150000.00,
         ]);
 
         Position::create([
             'name' => 'Manager',
             'department_id' => 1,
-            'salary' => 50000.00,
+            // 'salary' => 50000.00,
         ]);
 
         Position::create([
             'name' => 'CEO',
             'department_id' => 2,
-            'salary' => 150000.00,
+            // 'salary' => 150000.00,
         ]);
 
         Position::create([
             'name' => 'Manager',
             'department_id' => 2,
-            'salary' => 50000.00,
+            // 'salary' => 50000.00,
         ]);
 
         Position::create([
             'name' => 'CEO',
             'department_id' => 3,
-            'salary' => 150000.00,
+            // 'salary' => 150000.00,
         ]);
 
         Position::create([
             'name' => 'Manager',
             'department_id' => 3,
-            'salary' => 50000.00,
+            // 'salary' => 50000.00,
         ]);
 
         Position::create([
             'name' => 'Software Engineer',
             'department_id' => 1,
-            'salary' => 75000.00,
+            // 'salary' => 75000.00,
         ]);
 
         Position::create([
             'name' => 'Project Manager',
             'department_id' => 2,
-            'salary' => 85000.00,
+            // 'salary' => 85000.00,
         ]);
 
         Position::create([
             'name' => 'HR Specialist',
             'department_id' => 3,
-            'salary' => 60000.00,
+            // 'salary' => 60000.00,
         ]);
         
         Position::create([
             'name' => 'Secretary',
             'department_id' => 3,
-            'salary' => 60000.00,
+            // 'salary' => 60000.00,
         ]);
     }
 }
