@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: backend_api
+    build: .
+    volumes:
+      - .:/var/www/html/backend
+    expose:
+      - "8080"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14
+    container_name: pgsql_db
+    restart: always
+    environment:
+      POSTGRES_DB: hris
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /home/user/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /home/user/etc/nginx/sites-available/api.hris.my.id:/etc/nginx/sites-available/api.hris.my.id
+      - /home/user/etc/nginx/sites-enabled/api.hris.my.id:/etc/nginx/sites-enabled/api.hris.my.id
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
