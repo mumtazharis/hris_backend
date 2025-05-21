@@ -21,7 +21,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22 
         script: |
-          cd /home/$USER/hris-backend
+          cd /home/$USER/hris_backend
           git pull origin main
           docker-compose exec app composer install --no-interaction --prefer-dist --optimize-autoloader
           docker-compose exec app php artisan migrate --force
