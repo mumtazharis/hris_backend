@@ -24,7 +24,7 @@ class CheckClockSeeder extends Seeder
                     'employee_id' => $employeeId,
                     'approver_id' => Arr::random($employees),
                     // 'check_clock_type' => $type,
-                    'check_clock_date' => Carbon::now()->toDateString(),
+                    'check_clock_date' => Carbon::now(),
                     // 'check_clock_time' => match ($type) {
                     //     'in' => Carbon::now()->setTime(9, 0)->toTimeString(),
                     //     'out' => Carbon::now()->setTime(17, 0)->toTimeString(),

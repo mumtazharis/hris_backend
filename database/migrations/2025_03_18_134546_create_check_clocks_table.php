@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('employee_id')->constrained('employees');
             $table->foreignId('approver_id')->constrained('users');
-            $table->date('check_clock_date');
+            $table->dateTime('check_clock_date');
             $table->enum('status', ['present', 'absent'])->default('present');
             $table->enum('status_approval', ['approved', 'pending', 'rejected'])->default('pending');
             $table->timestamps();
