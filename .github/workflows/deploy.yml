@@ -23,6 +23,6 @@ jobs:
         script: |
           cd /home/$USER/hris_backend
           git pull origin main
-          docker-compose exec app composer install --no-interaction --prefer-dist --optimize-autoloader
-          docker-compose exec app php artisan migrate --force
-          docker-compose exec app php artisan config:cache
+          docker-compose exec -T app composer install --no-interaction --prefer-dist --optimize-autoloader
+          docker-compose exec -T app php artisan migrate --force
+          docker-compose exec -T app php artisan config:cache
