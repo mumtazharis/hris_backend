@@ -20,6 +20,8 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('reset-password', [ResetPasswordController::class, 'reqResetPassword'])->name('reset_password');
     Route::post('reset-process', [ResetPasswordController::class, 'resetPassword'])->name('reset_password_process');
     Route::post('token-checker', [ResetPasswordController::class, 'checkToken'])->name('check_token');
+
+    Route::get('dashboardnologin', [DashboardController::class, 'dashboard']);
 });
 
 Route::middleware('auth:sanctum','role:employee,admin')->group(function () {

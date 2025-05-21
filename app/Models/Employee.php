@@ -30,6 +30,7 @@ class Employee extends Model
     'gender',
     'blood_type',
     'salary',
+    'work_status',
     'join_date',
     'resign_date',
     'employee_photo',

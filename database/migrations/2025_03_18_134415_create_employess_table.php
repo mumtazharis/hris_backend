@@ -31,6 +31,7 @@ return new class extends Migration
             $table->char('gender')->nullable();
             $table->string('blood_type')->nullable();
             $table->string('salary')->nullable();
+            $table->enum('work_status', ['permanent', 'internship', 'part-time', 'outsource'])->default('permanent')->nullable();
             $table->date('join_date')->nullable();
             $table->date('resign_date')->nullable();
             $table->string('employee_photo')->nullable();
