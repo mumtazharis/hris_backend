@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CheckClockController;
 use App\Http\Controllers\CheckClockSettingController;
 use App\Http\Controllers\CheckClockSettingTimesController;
+use App\Http\Controllers\PaymentController;
 
 Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -13,6 +14,7 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('login', [AuthController::class, 'login'])->name('login');
     Route::post('signupWithGoogle', [AuthController::class, 'signupWithGoogle'])->name('login_google');
     Route::post('loginWithGoogle', [AuthController::class, 'loginWithGoogle'])->name('login_google');
+    Route::post('payment', [PaymentController::class, 'createXenditInvoice'])->name('payment');
 });
 
 Route::middleware('auth:sanctum','role:employee,admin')->group(function () {

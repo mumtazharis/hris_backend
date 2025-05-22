@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 
 class CheckClockController extends Controller
 {
@@ -16,7 +17,36 @@ class CheckClockController extends Controller
      */
     public function index()
     {
-        $checkClocks = CheckClock::all();
+        $checkClocks = CheckClock::select(
+            'check_clocks.employee_id',
+            DB::raw("CONCAT(employees.first_name, ' ', employees.last_name) AS employeeName"),
+            'positions.name AS position',
+            'check_clocks.check_clock_date AS date',
+            DB::raw("MAX(CASE WHEN check_clocks.check_clock_type = 'in' THEN check_clocks.check_clock_time ELSE NULL END) AS clockIn"),
+            DB::raw("MAX(CASE WHEN check_clocks.check_clock_type = 'out' THEN check_clocks.check_clock_time ELSE NULL END) AS clockOut"),
+            'check_clock_settings.name AS workType',
+            DB::raw("MAX(CASE 
+                WHEN check_clocks.check_clock_type = 'in' AND check_clocks.check_clock_time > check_clock_setting_times.clock_in THEN 'Late'
+                WHEN check_clocks.check_clock_type = 'in' AND check_clocks.check_clock_time <= check_clock_setting_times.clock_in THEN 'On Time'
+                ELSE NULL 
+            END) AS status"),
+            DB::raw("MAX(check_clocks.status) AS approvalStatus")
+        )
+            ->join('employees', 'check_clocks.employee_id', '=', 'employees.id')
+            ->join('positions', 'employees.position_id', '=', 'positions.id')
+            ->join('check_clock_settings', 'employees.ck_setting_id', '=', 'check_clock_settings.id')
+            ->join('check_clock_setting_times', 'check_clock_setting_times.ck_setting_id', '=', 'check_clock_settings.id')
+            ->groupBy(
+                'check_clocks.employee_id',
+                'employees.first_name',
+                'employees.last_name',
+                'positions.name',
+                'check_clocks.check_clock_date',
+                'check_clock_settings.name'
+            )
+            ->orderBy('check_clocks.check_clock_date')
+            ->orderBy(DB::raw("CONCAT(employees.first_name, ' ', employees.last_name)"))
+            ->get();
         return response()->json($checkClocks);
     }
 
