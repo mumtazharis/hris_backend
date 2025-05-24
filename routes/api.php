@@ -14,7 +14,9 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('login', [AuthController::class, 'login'])->name('login');
     Route::post('signupWithGoogle', [AuthController::class, 'signupWithGoogle'])->name('login_google');
     Route::post('loginWithGoogle', [AuthController::class, 'loginWithGoogle'])->name('login_google');
-    Route::post('payment', [PaymentController::class, 'createXenditInvoice'])->name('payment');
+    // Route::post('payment', [PaymentController::class, 'createXenditInvoice'])->name('payment');
+    Route::post('payment', [PaymentController::class, 'createInvoice'])->name('payment');
+    Route::post('order_summary', [PaymentController::class, 'getOrderSummary'])->name('order_summary');
 });
 
 Route::middleware('auth:sanctum','role:employee,admin')->group(function () {

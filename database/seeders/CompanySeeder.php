@@ -18,12 +18,14 @@ class CompanySeeder extends Seeder
             [
                 'name' => 'Company One',
                 'company_id' => 'COMP001',
+                'plan_id' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Company Two',
                 'company_id' => 'COMP002',
+                'plan_id' => 3,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

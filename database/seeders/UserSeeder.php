@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'role' => 'admin',
                 'is_profile_complete' => true,
+                
             ],
             [
                 'company_id' => 1,
