@@ -25,13 +25,14 @@ return new class extends Migration
             $table->string('phone')->unique()->nullable();
             $table->string('birth_place')->nullable();
             $table->date('birth_date')->nullable();
+            $table->enum('education', ['SD', 'SMP', 'SMA', 'D3', 'D4', 'S1', 'S2', 'S3'])->nullable();
             $table->string('religion')->nullable();
-            $table->string('marital_status')->nullable();
+            $table->enum('marital_status', ['Single', 'Married', 'Divorced', 'Widowed'])->nullable();
             $table->string('citizenship')->nullable();
-            $table->char('gender')->nullable();
-            $table->string('blood_type')->nullable();
+            $table->enum('gender', ['Male', 'Female'])->nullable();
+            $table->enum('blood_type', ['A', 'B', 'AB', 'O', 'Unknown'])->nullable();
             $table->string('salary')->nullable();
-            $table->enum('work_status', ['permanent', 'internship', 'part-time', 'outsource'])->default('permanent')->nullable();
+            $table->enum('work_status', ['Permanent', 'Internship', 'Part-time', 'Outsource'])->default('Permanent')->nullable();
             $table->date('join_date')->nullable();
             $table->date('resign_date')->nullable();
             $table->string('employee_photo')->nullable();
@@ -45,6 +46,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('employess');
+        Schema::dropIfExists('employees');
     }
 };

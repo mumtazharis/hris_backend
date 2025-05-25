@@ -8,7 +8,7 @@ use Illuminate\Testing\Fluent\Concerns\Has;
 
 class Employee extends Model
 {
-    use HasFactory;
+    // use HasFactory;
     
     protected $table = 'employees';
     protected $fillable = [
@@ -24,6 +24,7 @@ class Employee extends Model
     'phone',
     'birth_place',
     'birth_date',
+    'education',
     'religion',
     'marital_status',
     'citizenship',
