@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('bills', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('payment_id')->unique()->nullable(false); // id unik tiap pembayaran
+            // $table->bigInteger('payment_id')->unique()->nullable(false); // id unik tiap pembayaran
+            $table->string('payment_id')->unique()->nullable(false); 
             $table->foreignId('user_id')->constrained('users');
             $table->integer('total_employee'); // jumlah employee jadi tagihan (termasuk employee yang dihapus) bulan ini
             $table->decimal('amount', 12, 0); // jumlah harga yang dibayarkan (disini di set max 12 digit)
-            $table->date('period'); // periode pembayaran per bulan/tahun (di db tetep kesimpen format yyyy:MM:dd)
+            // $table->date('period'); // periode pembayaran per bulan/tahun (di db tetep kesimpen format yyyy:MM:dd)
+            $table->string('period', 7); // Format: mm-yyyy
             $table->date('deadline');
             $table->enum('status', ['pending', 'paid', 'overdue', 'failed'])->default('pending');
             $table->timestamps();

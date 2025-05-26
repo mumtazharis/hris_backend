@@ -12,7 +12,7 @@ class DeletedEmployeeLogSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-   public function run()
+    public function run()
     {
         // Hapus data yang ada sebelumnya untuk menghindari duplikasi saat seeding ulang
         DB::table('deleted_employee_log')->truncate();
@@ -24,10 +24,10 @@ class DeletedEmployeeLogSeeder extends Seeder
         $data = [];
 
         // Menambahkan 3 data untuk bulan ini
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 100; $i++) {
             $data[] = [
-                'user_id' => rand(1, 8), // ID user acak antara 1 dan 10
-                'deleted_employee' =>  rand(1, 8), // Contoh data karyawan yang dihapus
+                'user_id' =>1, // user_id hanya 1 atau 7
+                'deleted_employee_name' =>  'Employee ' . rand(1, 10), // Nama karyawan yang dihapus
                 'created_at' => Carbon::now()->subDays(rand(0, 29))->format('Y-m-d H:i:s'), // Tanggal di bulan ini
                 'updated_at' => Carbon::now()->subDays(rand(0, 29))->format('Y-m-d H:i:s'),
             ];
@@ -36,8 +36,8 @@ class DeletedEmployeeLogSeeder extends Seeder
         // Menambahkan 2 data untuk bulan lalu (agar ada yang tidak terfilter)
         for ($i = 0; $i < 2; $i++) {
             $data[] = [
-                'user_id' => rand(1, 8),
-                'deleted_employee' => rand(1, 8),
+                'user_id' => rand(0, 1) ? 7 : 1,
+                'deleted_employee_name' => 'Employee ' . rand(1, 10),
                 'created_at' => Carbon::now()->subMonth()->subDays(rand(0, 29))->format('Y-m-d H:i:s'), // Tanggal bulan lalu
                 'updated_at' => Carbon::now()->subMonth()->subDays(rand(0, 29))->format('Y-m-d H:i:s'),
             ];

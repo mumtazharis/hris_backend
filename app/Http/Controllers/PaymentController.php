@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 use Inertia\Inertia;
 
@@ -31,7 +32,6 @@ class PaymentController extends Controller
 
     public function getOrderSummary(): JsonResponse
     {
-        $loggedInUserId = 1;
         // if (!Auth::check()) {
         //     return response()->json([
         //         'status' => 'error',
@@ -39,91 +39,15 @@ class PaymentController extends Controller
         //     ], 401);
         // }
 
-        // $loggedInUserId = Auth::id();
+        $loggedInUserId = 1;
 
-        // Dapatkan informasi plan
-        $plan = "
-                SELECT
-                    bp.plan_name AS plan_name,
-                    bp.id AS plan_id
-                FROM
-                    users u
-                JOIN
-                    companies c ON u.company_id = c.id
-                JOIN
-                    billing_plans bp ON c.plan_id = bp.id
-                WHERE
-                    u.id = 1;
-                ";
-
-        if (!$plan) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Plan information not found.'
-            ], 404);
-        }
-
-        // Hitung total karyawan
-    //    $totalEmployeeQuery = (
-    //         "SELECT
-    //                     (SELECT COUNT(*) FROM employees) +
-    //                     (SELECT COUNT(*) FROM deleted_employee_log 
-    //                 WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM'))
-    //                 AS total_employees_including_this_month_deleted");
-        $totalEmployee =("
-    SELECT
-        (SELECT COUNT(*) FROM employees) +
-        (SELECT COUNT(*) FROM deleted_employee_log
-        WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM'))
-    AS total_employees
-");
-// $numberOfEmployees = $totalEmployeeResult->total_employees ?? 0;
-        // $totalEmployeeResult = DB::selectOne($totalEmployeeQuery, [$loggedInUserId, $loggedInUserId]);
-        // $numberOfEmployees = $totalEmployeeResult->total_employees ?? 0;
-
-        // Dapatkan harga per user berdasarkan jumlah karyawan
-        $price = DB::selectOne(
-            "SELECT
-                        pp.price
-                    FROM
-                        billing_plans bp
-                    JOIN
-                        plans_price pp ON bp.id = pp.plan_id
-                    JOIN
-                        companies c ON c.plan_id = bp.id
-                    JOIN
-                        users u ON u.company_id = c.id
-                    WHERE
-                        u.id = 1 AND
-                        (
-                            (SELECT COUNT(*) FROM employees) +
-                            (SELECT COUNT(*)
-                            FROM deleted_employee_log
-                            WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM'))
-                        ) >= pp.employee_min AND
-                        (pp.employee_max IS NULL OR
-                        (
-                            (SELECT COUNT(*) FROM employees) +
-                            (SELECT COUNT(*)
-                            FROM deleted_employee_log
-                            WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM'))
-                        ) <= pp.employee_max
-                        );");
-        // $pricePerUserResult = DB::selectOne($price, [$plan, $numberOfEmployees, $numberOfEmployees]);
-        // $pricePerUser = $pricePerUserResult->price ?? 0;
-
-        // Hitung subtotal
-        $subtotal = $totalEmployee * $price;
+        $pendingBills = Bills::where('user_id', $loggedInUserId)
+            ->where('status', 'pending')
+            ->get();
 
         return response()->json([
             'status' => 'success',
-            'data' => [
-                'package' => $plan,
-                'numberOfEmployees' => $totalEmployee,
-                'pricePerUser' => $price,
-                'subtotal' => $subtotal,
-                // Tambahkan data lain yang diperlukan
-            ]
+            'data' => $pendingBills
         ]);
     }
 
@@ -134,133 +58,82 @@ class PaymentController extends Controller
             'Content-Type' => 'application/json',
             'Authorization' => 'Basic ' . $api_key,
         ];
-        $totalEmployee = DB::selectOne(
-            "SELECT
-                        (SELECT COUNT(*) FROM employees) +
-                        (SELECT COUNT(*) FROM deleted_employee_log 
-                    WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM'))
-                    AS total_employees_including_this_month_deleted")->total_employees_including_this_month_deleted;
 
-        $price = DB::selectOne(
-            "SELECT
-                        pp.price
-                    FROM
-                        billing_plans bp
-                    JOIN
-                        plans_price pp ON bp.id = pp.plan_id
-                    JOIN
-                        companies c ON c.plan_id = bp.id
-                    JOIN
-                        users u ON u.company_id = c.id
-                    WHERE
-                        u.id = 1 AND
-                        (
-                            (SELECT COUNT(*) FROM employees) +
-                            (SELECT COUNT(*)
-                            FROM deleted_employee_log
-                            WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM'))
-                        ) >= pp.employee_min AND
-                        (pp.employee_max IS NULL OR
-                        (
-                            (SELECT COUNT(*) FROM employees) +
-                            (SELECT COUNT(*)
-                            FROM deleted_employee_log
-                            WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM'))
-                        ) <= pp.employee_max
-                        );");
 
-        $res = Http::withHeaders($headers)->post('https://api.xendit.co/v2/invoices', [
-            'external_id' => $request['external_id'],
-            'total_employee'=> $totalEmployee,
-            'amount' => ($totalEmployee * $price->price),
-            'invoice_duration' => $request['invoice_duration'],
-        ]);
+        //  if (!Auth::check()) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'User not authenticated.'
+        //     ], 401);
+        // }
 
-        return json_decode($res->body(), true);
-    }
+        // $loggedInUserId = Auth::id(); // Mendapatkan ID user yang sedang login
 
-    public function createPayment($id)
-    {
-        $product = Bills::find($id);
-        $isAlreadyExist = Bills::where('product_id', $id)
+        $loggedInUserId = 7;
+        $currentPeriod = now()->format('m-Y');
+
+        $bill = DB::table('bills')
+            ->where('user_id', $loggedInUserId)
+            ->where('period', $currentPeriod)
             ->where('status', 'pending')
-            ->exists();
+            ->latest('created_at')
+            ->first();
 
-        if ($isAlreadyExist) {
+        if (!$bill) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'You already have a pending payment for this product'
-            ], 400);
+                'message' => 'No pending bill found for the current period.',
+            ], 404);
         }
-        $externalId = 'INV-' . date('Ymd') . '-' . rand(100, 999);
 
-        $payment = $product->payments()->create([
-            'external_id' => $externalId,
-            'status' => 'pending',
-            'amount' => $product->price
+        $invoiceDuration = 1 * 24 * 60 * 60; // 1 hari
+
+        $res = Http::withHeaders($headers)->post('https://api.xendit.co/v2/invoices', [
+            'external_id' => $bill->payment_id,
+            'total_employee' => $bill->total_employee,
+            'amount' => $bill->amount,
+            'invoice_duration' => $invoiceDuration,
         ]);
 
-        $params = [
-            'external_id' => $externalId,
-            'amount' => $product->price,
-            'invoice_duration' => 3600,
-        ];
-
-        $invoice = $this->createInvoice($params);
-
-        $payment->update([
-            'payment_url' => $invoice['invoice_url'],
-        ]);
-
-        $product->update([
-            'status' => 'pending'
-        ]);
+        $response = json_decode($res->body(), true);
 
         return response()->json([
             'status' => 'success',
-        ]);
+            'message' => 'Invoice created successfully.',
+            'invoice_url' => $response['invoice_url'] ?? null,
+            'external_id' => $response['external_id'] ?? null,
+            'amount' => $response['amount'] ?? null,
+            'xendit_id' => $response['id'] ?? null,
+        ], 200);
     }
 
-    public function callback(Request $request)
+    public function handle(Request $request)
     {
-        try {
+        $payment_id = $request->input('external_id');
+        $status = strtoupper($request->input('status')); // Ubah ke huruf besar
 
-            $payment = Bills::where('external_id', $request->external_id)->first();
-            $callback_token = env('XENDIT_CALLBACK_TOKEN');
+        if ($status === 'PAID') {
+            $updated = DB::table('bills')
+                ->where('payment_id', $payment_id)
+                ->update(['status' => 'paid']);
 
-            if ($request->header('x-callback-token') !== $callback_token) {
+            if ($updated === 0) {
+                // Tidak ada record yang terupdate
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'Invalid callback token'
-                ], 400);
+                    'message' => 'No matching bill found or already updated.',
+                    'payment_id' => $payment_id,
+                    'status' => $status
+                ], 404);
             }
-
-            // if ($payment) {
-            //     $payment->update([
-            //         'status' => $request->status,
-            //     ]);
-
-            //     $product = Product::find($payment->product_id);
-
-            //     if ($request->status === 'PAID') {
-            //         $product->update([
-            //             'status' => 'paid'
-            //         ]);
-            //     } else {
-            //         $product->update([
-            //             'status' => 'expired'
-            //         ]);
-            //     }
-            // }
-
+        } else {
+            // Status tidak dikenali
             return response()->json([
-                'status' => 'success',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ], 500);
+                'message' => 'Unrecognized status from Xendit',
+                'status' => $status
+            ], 400);
         }
+
+        // Sukses
+        return response()->json(['message' => 'Webhook received'], 200);
     }
 }

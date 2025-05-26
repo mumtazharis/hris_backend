@@ -17,6 +17,8 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     // Route::post('payment', [PaymentController::class, 'createXenditInvoice'])->name('payment');
     Route::post('payment', [PaymentController::class, 'createInvoice'])->name('payment');
     Route::post('order_summary', [PaymentController::class, 'getOrderSummary'])->name('order_summary');
+    Route::post('/xendit/webhook', [PaymentController::class, 'handle']);
+    
 });
 
 Route::middleware('auth:sanctum','role:employee,admin')->group(function () {

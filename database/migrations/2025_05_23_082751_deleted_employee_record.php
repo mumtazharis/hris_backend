@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('deleted_employee_log', function (Blueprint $table) {
             $table->foreignId('user_id')->constrained('users'); // user that delete the data
-            $table->integer('deleted_employee'); // id of deleted employee
+            $table->string('deleted_employee_name'); // id of deleted employee
             $table->timestamps();
         });
     }
