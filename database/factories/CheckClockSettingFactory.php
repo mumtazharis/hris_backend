@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CheckClockSettingFactory extends Factory
 {
-    public function definition()
+    public function definition(): array
     {
         return [
-            'name' => $this->faker->company . ' Clock Setting',
+            'name' => $this->faker->name,
             'latitude' => $this->faker->latitude,
             'longitude' => $this->faker->longitude,
-            'radius' => $this->faker->randomFloat(2, 0.1, 10) . '', // as string
+            'radius' => '100',
         ];
     }
 }

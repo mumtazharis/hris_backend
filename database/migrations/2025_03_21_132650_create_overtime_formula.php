@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('positions', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
-            // $table->decimal('salary', 10, 2)->default(0);
+        Schema::create('overtime_formula', function (Blueprint $table) {
+            $table->foreignId('setting_id')->constrained('overtime_settings');
+            $table->integer('hour_start');
+            $table->integer('hour_end')->nullable();
+            $table->string('formula');
             $table->timestamps();
-            $table->softDeletes();
         });
-        
     }
 
     /**
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('positions');
+        Schema::dropIfExists('overtime_formula');
     }
 };

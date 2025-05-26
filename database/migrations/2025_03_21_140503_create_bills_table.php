@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('period', 7); // Format: mm-yyyy
             $table->date('deadline');
             $table->enum('status', ['pending', 'paid', 'overdue', 'failed'])->default('pending');
+            $table->enum('status', ['pending', 'paid', 'overdue', 'failed'])->default('pending');
             $table->timestamps();
             $table->softDeletes();
         });

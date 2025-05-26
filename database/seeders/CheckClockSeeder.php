@@ -6,6 +6,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\CheckClock;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 
 class CheckClockSeeder extends Seeder
 {
@@ -21,19 +22,21 @@ class CheckClockSeeder extends Seeder
             foreach ($checkClockTypes as $type) {
                 CheckClock::create([
                     'employee_id' => $employeeId,
-                    'check_clock_type' => $type,
-                    'check_clock_date' => Carbon::now()->toDateString(),
-                    'check_clock_time' => match ($type) {
-                        'in' => Carbon::now()->setTime(9, 0)->toTimeString(),
-                        'out' => Carbon::now()->setTime(17, 0)->toTimeString(),
-                        'break_start' => Carbon::now()->setTime(12, 0)->toTimeString(),
-                        'break_ended' => Carbon::now()->setTime(13, 0)->toTimeString(),
-                        default => Carbon::now()->toTimeString(),
-                    },
-                    'latitude' => fake()->latitude,
-                    'longitude' => fake()->longitude,
-                    'evidence' => fake()->imageUrl(),
-                    'status' => 'approved', // Ensure this matches the allowed values in the database constraint
+                    'approver_id' => Arr::random($employees),
+                    // 'check_clock_type' => $type,
+                    'check_clock_date' => Carbon::now(),
+                    // 'check_clock_time' => match ($type) {
+                    //     'in' => Carbon::now()->setTime(9, 0)->toTimeString(),
+                    //     'out' => Carbon::now()->setTime(17, 0)->toTimeString(),
+                    //     'break_start' => Carbon::now()->setTime(12, 0)->toTimeString(),
+                    //     'break_ended' => Carbon::now()->setTime(13, 0)->toTimeString(),
+                    //     default => Carbon::now()->toTimeString(),
+                    // },
+                    'status' => 'present',
+                    // 'latitude' => fake()->latitude,
+                    // 'longitude' => fake()->longitude,
+                    // 'evidence' => fake()->imageUrl(),
+                    'status_approval' => 'approved', // Ensure this matches the allowed values in the database constraint
                 ]);
             }
         }

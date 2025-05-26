@@ -2,21 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CheckClock extends Model
 {
+    use HasFactory;
     protected $table = 'check_clocks';
 
     protected $fillable = [
         'employee_id',
-        'check_clock_type',
+        'approver_id',
         'check_clock_date',
-        'check_clock_time',
-        'latitude',
-        'longitude',
-        'evidence',
         'status',
+        'status_approval',
     ];
 
     /**
@@ -25,5 +24,9 @@ class CheckClock extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+    public function approver()
+    {
+        return $this->belongsTo(User::class);
     }
 }

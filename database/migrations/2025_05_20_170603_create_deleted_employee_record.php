@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('leave_approval', function (Blueprint $table) {
-            $table->id();
+        Schema::create('deleted_employee_log', function (Blueprint $table) {
+            $table->foreignId('user_id')->constrained('users'); // user that delete the data
+            $table->integer('deleted_employee'); // id of deleted employee
             $table->timestamps();
         });
     }
@@ -22,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('leave_approval');
+        Schema::dropIfExists('deleted_employee_log');
     }
 };
