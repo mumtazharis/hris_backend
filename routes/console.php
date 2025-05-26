@@ -12,6 +12,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Schedule::command(GenerateMonthlyBills::class)
-//     ->monthlyOn(25, '14:42');
+//     ->monthlyOn(28, '00:00');
 
 Schedule::command(GenerateMonthlyBills::class)->everyMinute();
