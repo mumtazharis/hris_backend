@@ -9,6 +9,7 @@ use App\Http\Controllers\CheckClockSettingTimesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MailTest;
 use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\PaymentController;
 
 Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -22,6 +23,11 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('token-checker', [ResetPasswordController::class, 'checkToken'])->name('check_token');
 
     Route::get('dashboardnologin', [DashboardController::class, 'dashboard']);
+    // Route::post('payment', [PaymentController::class, 'createXenditInvoice'])->name('payment');
+    Route::post('payment', [PaymentController::class, 'createInvoice'])->name('payment');
+    Route::post('order_summary', [PaymentController::class, 'getOrderSummary'])->name('order_summary');
+    Route::post('/xendit/webhook', [PaymentController::class, 'handle']);
+    
 });
 
 Route::middleware('auth:sanctum','role:employee,admin')->group(function () {

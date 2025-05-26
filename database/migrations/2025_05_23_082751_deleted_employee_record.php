@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('companies', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('company_id')->unique();
-            $table->foreignId('plan_id')->nullable()->constrained('billing_plans');
+        Schema::create('deleted_employee_log', function (Blueprint $table) {
+            $table->foreignId('user_id')->constrained('users'); // user that delete the data
+            $table->string('deleted_employee_name'); // id of deleted employee
             $table->timestamps();
         });
     }
@@ -25,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('companies');
+        Schema::dropIfExists('deleted_employee_log');
     }
-};
+};  

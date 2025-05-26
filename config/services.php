@@ -39,5 +39,8 @@ return [
     'client_id' => env('GOOGLE_CLIENT_ID'),
     ],
 
+    'xendit' => [
+    'api_key' => env('XENDIT_SECRET_KEY'),
+],
 
 ];
