@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use Inertia\Inertia;
@@ -30,7 +31,7 @@ class PaymentController extends Controller
         // ]);
     }
 
-    public function getOrderSummary(): JsonResponse
+    public function getOrderSummary(Request $request): JsonResponse
     {
         // if (!Auth::check()) {
         //     return response()->json([
@@ -39,9 +40,18 @@ class PaymentController extends Controller
         //     ], 401);
         // }
 
-        $loggedInUserId = 1;
+        // $loggedInUserId = 1;
 
-        $pendingBills = Bills::where('user_id', $loggedInUserId)
+        $userId = $request->input('user_id');
+
+        if (!$userId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User ID is required.'
+            ], 400);
+        }
+
+        $pendingBills = Bills::where('user_id', $userId)
             ->where('status', 'pending')
             ->get();
 
@@ -69,11 +79,19 @@ class PaymentController extends Controller
 
         // $loggedInUserId = Auth::id(); // Mendapatkan ID user yang sedang login
 
-        $loggedInUserId = 7;
+        // $loggedInUserId = 7;
+        $userId = $request->input('user_id');
+
+        if (!$userId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User ID is required.'
+            ], 400);
+        }
         $currentPeriod = now()->format('m-Y');
 
         $bill = DB::table('bills')
-            ->where('user_id', $loggedInUserId)
+            ->where('user_id', $userId)
             ->where('period', $currentPeriod)
             ->where('status', 'pending')
             ->latest('created_at')
