@@ -17,6 +17,7 @@ class DashboardController extends Controller
             'employeeCount' => $this->getEmployeeCount(),
             'approvalStatus' => $this->getApprovalStatus(),
             'attendancePercentage' => $this->getAttendance(),
+            'getOvertimeStatus' => $this->getOvertimeStatus(),
             'employeeAge' => $this->getEMployeeAge(),
             'lateEmployee' => $this->getLateEmployee(),
             'employeeWorkStatus' => $this->getEmployeeWorkStatus(),
@@ -65,6 +66,18 @@ class DashboardController extends Controller
                 count(*) filter (where cc.status = 'absent') as \"Absent\"
             from check_clocks cc
             where cc.check_clock_date::date = CURRENT_DATE
+        ");
+    }
+
+    public function getOvertimeStatus()
+    {
+        return DB::select("
+            select
+                count(*) filter (where o.status_approval = 'approved') as \"Approved\",
+                count(*) filter (where o.status_approval = 'waiting') as \"Waiting\",
+                count(*) filter (where o.status_approval = 'rejected') as \"Rejected\"
+            from overtime o
+            where o.date::date = CURRENT_DATE
         ");
     }
 
