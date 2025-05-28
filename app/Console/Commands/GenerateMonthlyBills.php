@@ -38,10 +38,17 @@ class GenerateMonthlyBills extends Command
         $period = Carbon::now()->format('m-Y');
 
         // Deadline: tanggal 28 bulan ini, atau 5 hari dari sekarang jika tanggal saat ini sudah lewat 28
-        $deadlineDate = Carbon::now()->day(28)->format('Y-m-d');
-        if (Carbon::now()->day > 28) {
-            $deadlineDate = Carbon::now()->addMonth()->day(28)->format('Y-m-d');
-        }
+        $billingDay = 28; // Tanggal pembuatan tagihan
+        $deadlineOffsetDays = 5; // Deadline 5 hari setelah tanggal pembuatan tagihan
+        $billingDate = Carbon::now()->day($billingDay);
+                // Jika tanggal saat ini sudah lewat tanggal 28, maka tanggal tagihan adalah tanggal 28 bulan berikutnya
+                if (Carbon::now()->day > $billingDay) {
+                    $billingDate->addMonth();
+                }
+                $billingDate->day($billingDay); // Pastikan tanggalnya tetap 28 setelah addMonth jika diperlukan
+
+                // Deadline untuk tabel bills: 5 hari setelah tanggal pembuatan tagihan
+                $deadlineDate = $billingDate->copy()->addDays($deadlineOffsetDays)->format('Y-m-d');
 
         
         
@@ -64,17 +71,39 @@ class GenerateMonthlyBills extends Command
                 // Hitung total karyawan untuk perusahaan user ini
                 $totalEmployeeQuerySql = "
                 SELECT (
-                    COALESCE((SELECT COUNT(*) FROM users WHERE company_id = ?), 0) +
                     COALESCE((
                         SELECT COUNT(*)
-                        FROM deleted_employee_log
-                        WHERE user_id IN (SELECT id FROM users WHERE company_id = ?)
-                        AND TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
+                        FROM employees
+                        WHERE employee_status = 'Active'
+                        AND user_id IN (
+                            SELECT id FROM users WHERE company_id = ?
+                        )
                     ), 0)
-                ) AS total_employees_including_this_month_deleted
-                ";
-                $totalEmployeeResult = DB::selectOne($totalEmployeeQuerySql, [$companyIdOfUser, $companyIdOfUser]);
-                $numberOfEmployees = $totalEmployeeResult->total_employees_including_this_month_deleted ?? 0;
+                    +
+                    COALESCE((
+                        SELECT COUNT(*)
+                        FROM employees
+                        WHERE user_id IN (
+                            SELECT id FROM users WHERE company_id = ?
+                        )
+                        AND TO_CHAR(resign_date, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
+                        AND employee_status IN ('Resign', 'Retire')
+                    ), 0)
+                    +
+                    COALESCE((
+                        SELECT COUNT(*)
+                        FROM employees
+                        WHERE user_id IN (
+                            SELECT id FROM users WHERE company_id = ?
+                        )
+                        AND employee_status IN ('Resign', 'Retire')
+                        AND resign_date >= date_trunc('month', CURRENT_DATE - interval '1 month') + interval '28 day'
+                        AND resign_date < date_trunc('month', CURRENT_DATE)
+                        AND EXTRACT(DAY FROM resign_date) IN (29, 30, 31)
+                    ), 0)
+                ) AS total_employees_including_this_month_resigned;";
+                $totalEmployeeResult = DB::selectOne($totalEmployeeQuerySql, [$companyIdOfUser, $companyIdOfUser, $companyIdOfUser]);
+                $numberOfEmployees = $totalEmployeeResult->total_employees_including_this_month_resigned ?? 0;
 
                 
                $payment_id = 'hris-' . $user->id . '-' . $period;
@@ -113,6 +142,10 @@ class GenerateMonthlyBills extends Command
         $this->info('Monthly bills generated successfully!');
         
         Log::info('Bills generated at ' . now());
+        Log::info('Jumlah user ditemukan: ' . $users->count());
+        Log::info("Bill berhasil dibuat untuk user: " . $user->id);
+
+        
         return 0;
     }
 }

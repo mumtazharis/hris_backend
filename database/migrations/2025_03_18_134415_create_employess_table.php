@@ -35,7 +35,7 @@ return new class extends Migration
             $table->date('join_date')->nullable();
             $table->date('resign_date')->nullable();
             $table->string('employee_photo')->nullable();
-            $table->string('employee_status')->nullable();
+            $table->enum('employee_status', ['Active','Resign','Retire'])->default('Active');
             $table->timestamps();
         });
     }
