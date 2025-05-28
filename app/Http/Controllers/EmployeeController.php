@@ -28,7 +28,6 @@ class EmployeeController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            // 'employee_id' => 'required|string|unique:employees',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:17|unique:employees',
@@ -43,6 +42,7 @@ class EmployeeController extends Controller
             'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
             'religion' => 'nullable|string|max:100',
             'position_id' => 'nullable|exists:positions,id',
+            'department_id' => 'nullable|exists:departments,id',
             'work_status' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
             'address' => 'nullable|string|max:255',
             'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', 
@@ -59,11 +59,18 @@ class EmployeeController extends Controller
 
         // generate unique file name & save directory
         if ($request->hasFile('employee_photo')) {
+            // Membuat nama file unik agar tidak bentrok dengan foto lain
             $fileName = Str::random(8) . '.' . $request->file('employee_photo')->getClientOriginalExtension();
+            
+            // Menyimpan file foto ke direktori yang ditentukan
+            //    Secara default, 'public/employee_photos' akan disimpan di:
+            //    'storage/app/public/employee_photos/' di server Anda.
+            //    Agar bisa diakses via web, pastikan Anda sudah menjalankan 'php artisan storage:link'.
             $request->file('employee_photo')->storeAs('public/employee_photos', $fileName);
             $validated['employee_photo'] = $fileName;
         }
 
+        // prefix +62 in phone
         if (isset($validated['phone']) && !empty($validated['phone'])) {
             $phone = $validated['phone'];
             $phone = preg_replace('/[^0-9]/', '', $phone); // Tetap sanitasi semua non-digit
@@ -131,6 +138,7 @@ class EmployeeController extends Controller
             'email' => 'sometimes|nullable|string|max:100|unique:employees,email,' . $employee->id,
 
             // Employment Overview
+            'department_id' => 'sometimes|nullable|exists:departments,id',
             'position_id' => 'sometimes|nullable|exists:positions,id',
             'salary' => 'sometimes|nullable|string', 
             'work_status' => 'sometimes|nullable|in:Permanent,Internship,Part-time,Outsource',

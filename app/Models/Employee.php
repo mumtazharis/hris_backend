@@ -18,6 +18,7 @@ class Employee extends Model
     'nik',
     'first_name',
     'last_name',
+    'department_id',
     'position_id',
     'address',
     'email',
