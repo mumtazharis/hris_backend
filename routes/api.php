@@ -7,6 +7,7 @@ use App\Http\Controllers\CheckClockController;
 use App\Http\Controllers\CheckClockSettingController;
 use App\Http\Controllers\CheckClockSettingTimesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MailTest;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\PaymentController;
@@ -50,4 +51,5 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     // ], 200);
     
     Route::get('dashboard', [DashboardController::class, 'approvalStatus']);
+    Route::post('employee', [EmployeeController::class, 'store']);
 });
