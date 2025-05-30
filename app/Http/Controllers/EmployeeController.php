@@ -52,6 +52,7 @@ class EmployeeController extends Controller
             left join positions p on e.position_id = p.id
             left join departments d on p.department_id = d.id
             left join check_clock_settings ccs on e.ck_setting_id = ccs.id
+            order by e.id
         ");
 
         return response()->json([
