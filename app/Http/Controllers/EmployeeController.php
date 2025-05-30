@@ -243,8 +243,9 @@ class EmployeeController extends Controller
             'password_confirmation' => 'sometimes|nullable|string|min:8', // Harus ada jika 'password' ada
 
             // Employment Overview
-            'department_id' => 'sometimes|nullable|exists:departments,id',
-            'position_id' => 'sometimes|nullable|exists:positions,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'position_id' => 'nullable|exists:positions,id|required_with:department_id',
+
             'salary' => 'sometimes|nullable|string',
             'bank_code' => 'sometimes|nullable|exists:banks,code',
             'contract_type' => 'sometimes|nullable|in:Permanent,Internship,Part-time,Outsource',
