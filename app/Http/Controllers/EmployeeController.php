@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\Employee;
 use App\Models\User;
+use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -11,13 +13,52 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+use function Laravel\Prompts\password;
+use function Symfony\Component\Clock\now;
+
 class EmployeeController extends Controller
 {
 
     public function index()
     {
-        $employees = Employee::all();
-        return response()->json($employees);
+        // $employees = Employee::select('id', 'name', 'gender', 'phone', 'position', '')->get();
+        
+        // return response()->json($employees);
+        $summary = DB::select("
+            SELECT
+                COUNT(*) AS \"Total Employee\",
+                COUNT(*) FILTER (
+                    WHERE employee_status = 'Active'
+                    AND join_date >= CURRENT_DATE - INTERVAL '30 days'
+                ) AS \"Total New Hire\",
+                COUNT(*) FILTER (
+                    WHERE employee_status = 'Active'
+                ) AS \"Active Employee\"
+            FROM employees;
+
+        ");
+
+        $data = DB::select("
+            select 
+            e.employee_id as id, 
+            e.first_name || ' ' || e.last_name as \"name\",
+            e.gender,
+            e.phone,
+            p.name as \"position\",
+            e.contract_type as \"contract_type\",
+            ccs.name as \"workType\",
+            e.employee_status as \"status\"
+            from employees e 
+            left join positions p on e.position_id = p.id
+            left join departments d on p.department_id = d.id
+            left join check_clock_settings ccs on e.ck_setting_id = ccs.id
+        ");
+
+        return response()->json([
+            'periode' => now()->format('F Y'),
+            'summary' => $summary[0], // karena COUNT(*) return 1 row
+            'employees' => $data
+        ]);
     }
 
 
@@ -35,8 +76,8 @@ class EmployeeController extends Controller
         // 2. Validasi input dari request
         $validatedData = $request->validate([
             // Validasi untuk data USER (login)
-            'email' => 'required|string|email|max:255|unique:users,email', 
-            'password' => 'required|string|min:6', 
+            'email' => 'required|string|email|max:255|unique:employees,email', 
+            'password' => 'nullable|string|min:6', 
 
             // Validasi untuk data EMPLOYEE (sesuai skema tabel employees)
             'first_name' => 'required|string|max:255',
@@ -52,10 +93,12 @@ class EmployeeController extends Controller
             'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
             'religion' => 'nullable|string|max:100',
             'position_id' => 'nullable|exists:positions,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'work_status' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
+            // 'department_id' => 'nullable|exists:departments,id',
+            'contract_type' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
             'address' => 'nullable|string|max:255',
-            'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'bank_code' => 'nullable|exists:banks,code',
+            'account_number' => 'nullable',
+            'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:10000',
         ]);
 
         DB::beginTransaction();
@@ -64,33 +107,34 @@ class EmployeeController extends Controller
             // generate employee_id 
             $currentYearTwoDigits = date('y');
             do {
-                $uniqueRandomCode = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
+                $uniqueRandomCode = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
                 $generatedEmployeeId = "{$currentYearTwoDigits}{$uniqueRandomCode}";
             } while (Employee::where('employee_id', $generatedEmployeeId)->exists());
 
             // password default -> employee_id
-            $defaultPassword = $generatedEmployeeId; 
-
+            $password = $request['password'] ?? $generatedEmployeeId;
+            
             // 4. Buat User baru dengan role 'employee'
             $user = User::create([
-                'full_name' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
-                'email' => $validatedData['email'],
-                'password' => Hash::make($defaultPassword), 
+                'full_name' => $request['first_name'] . ' ' . $request['last_name'],
+                'password' => Hash::make($password), 
                 'role' => 'employee',
                 'company_id' => $hrUser->company_id,
-                'is_profile_complete' => false, // <-- Penting: set ini untuk memaksa ganti password
+                'is_profile_complete' => false,
             ]);
 
             // 5. Siapkan data untuk employee
-            $employeeData = collect($validatedData)->except(['email', 'password'])->all();
+            $employeeData = collect($validatedData)->except(['password'])->all();
             $employeeData['user_id'] = $user->id;
             $employeeData['employee_id'] = $generatedEmployeeId; 
 
             // 6. Kelola upload foto karyawan
             if ($request->hasFile('employee_photo')) {
-                $fileName = Str::random(8) . '.' . $request->file('employee_photo')->getClientOriginalExtension();
-                $request->file('employee_photo')->storeAs('public/employee_photos', $fileName);
+       
+                $path = $request->file('employee_photo')->store('public/employee_photos');
+                $fileName = basename($path);
                 $employeeData['employee_photo'] = $fileName;
+
             } else {
                 unset($employeeData['employee_photo']);
             }
@@ -105,6 +149,10 @@ class EmployeeController extends Controller
                 $employeeData['phone'] = '+' . $phone;
             }
 
+            // $position = Position::find($employeeData['position_id']);
+            // $employeeData['department_id'] = $position?->department_id;
+            $employeeData['join_date'] = now();
+            $employeeData['employee_status'] = 'Active';
             // 8. Buat entri Employee baru
             $employee = Employee::create($employeeData);
 
@@ -125,19 +173,37 @@ class EmployeeController extends Controller
 
     public function show(string $employee_id)
     {
-        $employee = Employee::where('employee_id', $employee_id)->first();
+        $employee = Employee::with([
+            'position.department',
+            'bank'
+        ])->where('employee_id', $employee_id)->first();
 
         if (!$employee) {
             return response()->json(['message' => 'Employee not found'], 404);
         }
 
-        return response()->json($employee);
+        // Buat array employee tanpa relasi lengkap
+        $employeeData = $employee->toArray();
+
+        // Hapus relasi position dan bank yang lengkap supaya tidak ikut dalam response
+        unset($employeeData['position']);
+        unset($employeeData['bank']);
+
+        return response()->json([
+            'employee' => $employeeData,
+            'department_id' => $employee->position->department->id ?? null,
+            'position_name' => $employee->position->name ?? null,
+            'department_name' => $employee->position->department->name ?? null,
+            'bank_name' => $employee->bank->name ?? null,
+        ]);
     }
+
 
 
 
     public function update(Request $request, string $employee_id)
     {
+        // dd($request->all(), $employee_id);
         // 1. Temukan data Employee yang akan diupdate
         $employee = Employee::where('employee_id', $employee_id)->first();
 
@@ -177,10 +243,12 @@ class EmployeeController extends Controller
             'password_confirmation' => 'sometimes|nullable|string|min:8', // Harus ada jika 'password' ada
 
             // Employment Overview
-            'department_id' => 'sometimes|nullable|exists:departments,id',
-            'position_id' => 'sometimes|nullable|exists:positions,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'position_id' => 'nullable|exists:positions,id|required_with:department_id',
+
             'salary' => 'sometimes|nullable|string',
-            'work_status' => 'sometimes|nullable|in:Permanent,Internship,Part-time,Outsource',
+            'bank_code' => 'sometimes|nullable|exists:banks,code',
+            'contract_type' => 'sometimes|nullable|in:Permanent,Internship,Part-time,Outsource',
             'join_date' => 'sometimes|nullable|date',
             'resign_date' => 'sometimes|nullable|date',
             'employee_status' => 'sometimes|nullable|string',
@@ -212,7 +280,7 @@ class EmployeeController extends Controller
 
             // 5. Siapkan data untuk update Employee
             // Kecualikan 'password' dan 'password_confirmation' karena itu hanya untuk tabel users
-            $employeeDataToUpdate = collect($validatedData)->except(['email', 'password', 'password_confirmation', 'first_name', 'last_name'])->all();
+            $employeeDataToUpdate = collect($validatedData)->except(['password', 'password_confirmation'])->all();
 
             // 6. Penanganan update foto karyawan
             if ($request->hasFile('employee_photo')) {
@@ -243,6 +311,13 @@ class EmployeeController extends Controller
                 }
                 $employeeDataToUpdate['phone'] = '+' . $phone;
             }
+
+            // if (!is_null($employeeDataToUpdate['position_id'])) {
+            //     $position = Position::find($employeeDataToUpdate['position_id']);
+            //     if ($position) {
+            //         $employeeDataToUpdate['department_id'] = $position->department_id;
+            //     }
+            // }
 
             // 8. Update data Employee
             $employee->update($employeeDataToUpdate);

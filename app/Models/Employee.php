@@ -18,7 +18,6 @@ class Employee extends Model
     'nik',
     'first_name',
     'last_name',
-    'department_id',
     'position_id',
     'address',
     'email',
@@ -32,7 +31,9 @@ class Employee extends Model
     'gender',
     'blood_type',
     'salary',
-    'work_status',
+    'contract_type',
+    'bank_code',
+    'account_number',
     'join_date',
     'resign_date',
     'employee_photo',
@@ -51,6 +52,10 @@ class Employee extends Model
     public function position()
     {
         return $this->belongsTo(Position::class);
+    }
+
+    public function bank(){
+        return $this->belongsTo(Bank::class, 'bank_code', 'code');
     }
 
 }

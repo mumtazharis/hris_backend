@@ -10,9 +10,13 @@ class Company extends Model
     protected $fillable = ['name', 'company_id','plan_id'];
 
     public function user(){
-        return $this->hasOne(User::class);
+        return $this->hasOne(User::class, 'company_id', 'company_id');
     }
-     public function billing_plans()
+
+    public function department(){
+        return $this->hasMany(Department::class, 'company_id', 'company_id');
+    }
+    public function billing_plans()
     {
         return $this->belongsTo(BillingPlan::class);
     }
