@@ -17,7 +17,7 @@ class DashboardController extends Controller
             'employeeCount' => $this->getEmployeeCount(),
             'approvalStatus' => $this->getApprovalStatus(),
             'attendancePercentage' => $this->getAttendance(),
-            'getOvertimeStatus' => $this->getOvertimeStatus(),
+            // 'getOvertimeStatus' => $this->getOvertimeStatus(),
             'employeeAge' => $this->getEMployeeAge(),
             'lateEmployee' => $this->getLateEmployee(),
             'employeeWorkStatus' => $this->getEmployeeWorkStatus(),

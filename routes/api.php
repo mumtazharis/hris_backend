@@ -8,6 +8,7 @@ use App\Http\Controllers\CheckClockSettingController;
 use App\Http\Controllers\CheckClockSettingTimesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FormDataController;
 use App\Http\Controllers\MailTest;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\PaymentController;
@@ -49,7 +50,12 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     //     // 'user' => $request->user(),
     //     'status' => 'Token is valid',
     // ], 200);
-    
+    Route::get('bank', [FormDataController::class, 'getBank']);
+    Route::get('department-position', [FormDataController::class, 'getDepartmentPosition']);
     Route::get('dashboard', [DashboardController::class, 'approvalStatus']);
+
+    Route::get('employee', [EmployeeController::class, 'index']);
+    Route::get('employee/{id}', [EmployeeController::class, 'show']);
     Route::post('employee', [EmployeeController::class, 'store']);
+    Route::patch('employee/{id}', [EmployeeController::class, 'update']);
 });

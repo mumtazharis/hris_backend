@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('user_id')->constrained('users')->unique();
             $table->foreignId('ck_setting_id')->nullable()->constrained('check_clock_settings');
             $table->string('employee_id')->unique();
             $table->string('nik')->nullable();
             $table->string('first_name');
             $table->string('last_name');
             $table->foreignId('position_id')->nullable()->constrained('positions');
-            $table->foreignId('department_id')->nullable()->constrained('departments');
-            $table->string('department')->nullable();
+            // $table->foreignId('department_id')->nullable()->constrained('departments');
+            // $table->string('department')->nullable();
             $table->string('address')->nullable();
             $table->string('email')->unique()->nullable();
             $table->string('phone')->unique()->nullable();
@@ -34,11 +34,14 @@ return new class extends Migration
             $table->enum('gender', ['Male', 'Female'])->nullable();
             $table->enum('blood_type', ['A', 'B', 'AB', 'O', 'Unknown'])->nullable();
             $table->string('salary')->nullable();
-            $table->enum('work_status', ['Permanent', 'Internship', 'Part-time', 'Outsource'])->default('Permanent')->nullable();
+            $table->enum('contract_type', ['Permanent', 'Internship', 'Part-time', 'Outsource'])->default('Permanent')->nullable();
+            $table->string('bank_code')->nullable();
+            $table->foreign('bank_code')->references('code')->on('banks');
+            $table->string('account_number')->nullable();
             $table->date('join_date')->nullable();
             $table->date('resign_date')->nullable();
             $table->string('employee_photo')->nullable();
-            $table->string('employee_status')->nullable();
+            $table->enum('employee_status', ['Active', 'Retire', 'Resign', 'Fired'])->default('Active')->nullable();
             $table->timestamps();
         });
     }
