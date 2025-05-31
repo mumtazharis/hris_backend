@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 use function Laravel\Prompts\password;
 use function Symfony\Component\Clock\now;
@@ -460,5 +461,313 @@ class EmployeeController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function previewCsv(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt',
+        ]);
+
+        $file = $request->file('csv_file');
+        $handle = fopen($file, 'r');
+        $header = fgetcsv($handle);
+
+        $validRows = [];
+        $invalidRows = [];
+        $rowNumber = 2;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            $data = array_combine($header, $row);
+
+            // Normalisasi tanggal kosong
+            foreach (['birth_date', 'join_date', 'resign_date'] as $dateField) {
+                if (isset($data[$dateField]) && trim($data[$dateField]) === '') {
+                    $data[$dateField] = null;
+                }
+            }
+
+            $validator = Validator::make($data, [
+                'email' => 'required|email|unique:employees,email',
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'phone' => 'nullable|string|max:17|unique:employees,phone',
+                'nik' => 'nullable|string|max:16|unique:employees,nik',
+                'position_id' => 'nullable|exists:positions,id',
+                'birth_date' => 'nullable|date',
+                'join_date' => 'nullable|date',
+                'resign_date' => 'nullable|date',
+                'education' => 'nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
+                'gender' => 'nullable|in:Male,Female',
+                'blood_type' => 'nullable|in:A,B,AB,O,Unknown',
+                'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
+                'contract_type' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
+                'bank_code' => 'nullable|exists:banks,code',
+            ]);
+
+            if ($validator->fails()) {
+                $invalidRows[] = $data;
+            } else {
+                $validRows[] = $data;
+            }
+
+            $rowNumber++;
+        }
+
+        fclose($handle);
+
+        return response()->json([
+            'total_rows' => $rowNumber - 2,
+            'valid_rows_count' => count($validRows),
+            'invalid_rows_count' => count($invalidRows),
+            'valid_rows' => $validRows,
+            'invalid_rows' => $invalidRows,
+        ]);
+    }
+
+    public function confirmImport(Request $request)
+    {   
+        
+        $request->validate([
+            'employees' => 'required|array',
+            'employees.*.email' => 'required|email|unique:employees,email',
+            'employees.*.first_name' => 'required|string|max:255',
+            'employees.*.last_name' => 'required|string|max:255',
+            'employees.*.phone' => 'nullable|string|max:17|unique:employees,phone',
+            'employees.*.nik' => 'nullable|string|max:16|unique:employees,nik',
+            'employees.*.position_id' => 'nullable|exists:positions,id',
+            'employees.*.birth_date' => 'nullable|date',
+            'employees.*.join_date' => 'nullable|date',
+            'employees.*.resign_date' => 'nullable|date',
+            'employees.*.education' => 'nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
+            'employees.*.gender' => 'nullable|in:Male,Female',
+            'employees.*.blood_type' => 'nullable|in:A,B,AB,O,Unknown',
+            'employees.*.marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
+            'employees.*.contract_type' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
+            'employees.*.bank_code' => 'nullable|exists:banks,code',
+        ]);
+
+
+        $hrUser = Auth::user();
+
+        if (!$hrUser || !$hrUser->company_id) {
+            return response()->json(['message' => 'HR user not authenticated or company_id not found.'], 403);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($request->employees as $data) {
+                $password = $data['employee_id'] ?? str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+                $user = User::create([
+                    'full_name' => $data['first_name'] . ' ' . $data['last_name'],
+                    'password' => Hash::make($password),
+                    'role' => 'employee',
+                    'company_id' => $hrUser->company_id,
+                    'is_profile_complete' => false,
+                ]);
+
+                if (!empty($data['phone'])) {
+                    $phone = preg_replace('/[^0-9]/', '', $data['phone']);
+                    if (!Str::startsWith($phone, '62')) {
+                        $phone = '62' . $phone;
+                    }
+                    $data['phone'] = '+' . $phone;
+                }
+
+                Employee::create([
+                    'user_id' => $user->id,
+                    'employee_id' => $data['employee_id'],
+                    'nik' => $data['nik'] ?? null,
+                    'first_name' => $data['first_name'],
+                    'last_name' => $data['last_name'],
+                    'email' => $data['email'],
+                    'phone' => $data['phone'] ?? null,
+                    'position_id' => $data['position_id'] ?? null,
+                    'address' => $data['address'] ?? null,
+                    'birth_place' => $data['birth_place'] ?? null,
+                    'birth_date' => $data['birth_date'] ?? null,
+                    'education' => $data['education'] ?? null,
+                    'religion' => $data['religion'] ?? null,
+                    'marital_status' => $data['marital_status'] ?? null,
+                    'citizenship' => $data['citizenship'] ?? null,
+                    'gender' => $data['gender'] ?? null,
+                    'blood_type' => $data['blood_type'] ?? null,
+                    'salary' => $data['salary'] ?? null,
+                    'contract_type' => $data['contract_type'] ?? null,
+                    'bank_code' => $data['bank_code'] ?? null,
+                    'account_number' => $data['account_number'] ?? null,
+                    'join_date' => $data['join_date'] ?? now(),
+                    'resign_date' => $data['resign_date'] ?? null,
+                    'employee_photo' => $data['employee_photo'] ?? null,
+                    'employee_status' => $data['employee_status'] ?? 'Active',
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json(['message' => 'Import berhasil!'], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal menyimpan data.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function resetPassword(string $employee_id)
+    {
+        // Cari employee berdasarkan employee_id
+        $employee = Employee::where('employee_id', $employee_id)->firstOrFail();
+
+        // Cari user yang terkait
+        $user = User::findOrFail($employee->user_id);
+
+        // Setel ulang password ke default (sama dengan employee_id)
+        $user->password = Hash::make($employee->employee_id);
+        $user->save();
+
+        // Opsional: bisa return response atau redirect dengan pesan sukses
+        return response()->json([
+            'message' => 'Password berhasil direset ke default.',
+            'default_password' => $employee->employee_id, // jangan dikirim di production
+        ]);
+    }
+
+
+    // public function importCsv(Request $request)
+    // {
+    //     $request->validate([
+    //         'csv_file' => 'required|file|mimes:csv,txt',
+    //     ]);
+
+    //     $hrUser = Auth::user();
+
+    //     if (!$hrUser || !$hrUser->company_id) {
+    //         return response()->json(['message' => 'HR user not authenticated or company_id not found.'], 403);
+    //     }
+
+    //     $file = $request->file('csv_file');
+    //     $handle = fopen($file, 'r');
+    //     $header = fgetcsv($handle); // Ambil header
+
+    //     $rows = [];
+    //     $invalidRows = [];
+
+    //     $rowNumber = 2; // Karena baris 1 adalah header
+
+    //     while (($row = fgetcsv($handle)) !== false) {
+    //         $data = array_combine($header, $row);
+
+    //         // Validasi sederhana per baris
+    //         $validator = Validator::make($data, [
+    //             'email' => 'required|email|unique:employees,email',
+    //             'first_name' => 'required|string|max:255',
+    //             'last_name' => 'required|string|max:255',
+    //             'phone' => 'nullable|string|max:17|unique:employees,phone',
+    //             'nik' => 'nullable|string|max:16|unique:employees,nik',
+    //             'position_id' => 'nullable|exists:positions,id',
+    //             'birth_date' => 'nullable|date',
+    //             'join_date' => 'nullable|date',
+    //             'resign_date' => 'nullable|date|nullable',
+    //             'education' => 'nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
+    //             'gender' => 'nullable|in:Male,Female',
+    //             'blood_type' => 'nullable|in:A,B,AB,O,Unknown',
+    //             'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
+    //             'contract_type' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
+    //             'bank_code' => 'nullable|exists:banks,code',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             $invalidRows[] = [
+    //                 'row' => $rowNumber,
+    //                 'errors' => $validator->errors()->all(),
+    //                 'data' => $data,
+    //             ];
+    //         } else {
+    //             $rows[] = $data;
+    //         }
+
+    //         $rowNumber++;
+    //     }
+
+    //     fclose($handle);
+
+    //     // Jika ada baris tidak valid, tampilkan pesan error
+    //     if (count($invalidRows) > 0) {
+    //         return response()->json([
+    //             'message' => 'Import gagal. Terdapat baris tidak valid.',
+    //             'invalid_rows' => $invalidRows
+    //         ], 422);
+    //     }
+
+    //     // Semua baris valid, lanjut simpan ke DB
+    //     DB::beginTransaction();
+
+    //     try {
+    //         foreach ($rows as $data) {
+    //             // Generate default password dari employee_id
+    //             $password = $data['employee_id'] ?? str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+    //             // Buat User login
+    //             $user = User::create([
+    //                 'full_name' => $data['first_name'] . ' ' . $data['last_name'],
+    //                 'password' => Hash::make($password),
+    //                 'role' => 'employee',
+    //                 'company_id' => $hrUser->company_id,
+    //                 'is_profile_complete' => false,
+    //             ]);
+
+    //             // Format nomor telepon
+    //             if (!empty($data['phone'])) {
+    //                 $phone = preg_replace('/[^0-9]/', '', $data['phone']);
+    //                 if (!Str::startsWith($phone, '62')) {
+    //                     $phone = '62' . $phone;
+    //                 }
+    //                 $data['phone'] = '+' . $phone;
+    //             }
+
+    //             $employeeData = [
+    //                 'user_id' => $user->id,
+    //                 'employee_id' => $data['employee_id'],
+    //                 'nik' => $data['nik'] ?? null,
+    //                 'first_name' => $data['first_name'],
+    //                 'last_name' => $data['last_name'],
+    //                 'email' => $data['email'],
+    //                 'phone' => $data['phone'] ?? null,
+    //                 'position_id' => $data['position_id'] ?? null,
+    //                 'address' => $data['address'] ?? null,
+    //                 'birth_place' => $data['birth_place'] ?? null,
+    //                 'birth_date' => $data['birth_date'] ?? null,
+    //                 'education' => $data['education'] ?? null,
+    //                 'religion' => $data['religion'] ?? null,
+    //                 'marital_status' => $data['marital_status'] ?? null,
+    //                 'citizenship' => $data['citizenship'] ?? null,
+    //                 'gender' => $data['gender'] ?? null,
+    //                 'blood_type' => $data['blood_type'] ?? null,
+    //                 'salary' => $data['salary'] ?? null,
+    //                 'contract_type' => $data['contract_type'] ?? null,
+    //                 'bank_code' => $data['bank_code'] ?? null,
+    //                 'account_number' => $data['account_number'] ?? null,
+    //                 'join_date' => $data['join_date'] ?? now(),
+    //                 'resign_date' => $data['resign_date'] ?? null,
+    //                 'employee_photo' => $data['employee_photo'] ?? null,
+    //                 'employee_status' => $data['employee_status'] ?? 'Active',
+    //             ];
+    //             // Format tanggal kosong menjadi null
+    //             $employeeData['resign_date'] = !empty($employeeData['resign_date']) ? $employeeData['resign_date'] : null;
+    //             $employeeData['birth_date'] = !empty($employeeData['birth_date']) ? $employeeData['birth_date'] : null;
+    //             $employeeData['join_date'] = !empty($employeeData['join_date']) ? $employeeData['join_date'] : now();
+
+    //             Employee::create($employeeData);
+    //         }
+
+    //         DB::commit();
+
+    //         return response()->json(['message' => 'Import berhasil!'], 201);
+
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json(['message' => 'Gagal menyimpan data.', 'error' => $e->getMessage()], 500);
+    //     }
+    // }
 
 }
