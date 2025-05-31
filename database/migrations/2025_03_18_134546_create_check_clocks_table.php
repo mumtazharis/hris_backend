@@ -18,6 +18,7 @@ return new class extends Migration
             $table->dateTime('check_clock_date');
             $table->enum('status', ['present', 'absent'])->default('present');
             $table->enum('status_approval', ['approved', 'pending', 'rejected'])->default('pending');
+            $table->text('reject_reason')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

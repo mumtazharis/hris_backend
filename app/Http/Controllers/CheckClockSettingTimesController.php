@@ -12,8 +12,14 @@ class CheckClockSettingTimesController extends Controller
      */
     public function index()
     {
-        $times = CheckClockSettingTimes::all();
-        return response()->json($times);
+        $times = CheckClockSettingTimes::whereNull('deleted_at')
+        ->orderBy('created_at', 'desc')
+        ->distinct()
+        ->get();
+        if ($times) {
+            return response()->json($times);
+        }
+        return response()->json(['errors' => ['message' => 'Failed to feth the data']], 401);
     }
 
     /**
@@ -32,7 +38,11 @@ class CheckClockSettingTimesController extends Controller
 
         $time = CheckClockSettingTimes::create($validated);
 
-        return response()->json($time, 201);
+        if ($time){
+            return response()->json(['success' => ['message' => 'Successfully update the data']], 200);
+        }
+
+        return response()->json(['error' => ['message' => 'Failed to update the data']], 401);
     }
 
     /**
@@ -41,7 +51,11 @@ class CheckClockSettingTimesController extends Controller
     public function show($id)
     {
         $record = CheckClockSettingTimes::find($id);
-        return response()->json($record);
+
+        if ($record) {
+            return response()->json($record);
+        }
+        return response()->json(['error' => ['message' => 'Failed to get the data']], 401);
     }
 
     /**
@@ -66,10 +80,15 @@ class CheckClockSettingTimesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CheckClockSettingTimes $checkClockSettingTimes)
+    public function destroy($id)
     {
-        $checkClockSettingTimes->delete();
+        $data = CheckClockSettingTimes::find($id);
+        if ($data) {
 
-        return response()->json(null, 204);
+            $data->delete();
+            return response()->json(['errors' => ['message' => 'The Setting Times have been removed']], 200);
+        }
+        return response()->json(['errors' => ['message' => 'Cannot find the data']], 401);
+
     }
 }
