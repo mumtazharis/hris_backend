@@ -356,4 +356,109 @@ class EmployeeController extends Controller
         return response()->json(['message' => 'Employee deleted successfully'], 200);
     }
 
+    public function exportCsv(Request $request)
+    {
+        $fileName = 'employee.csv';
+        $employees = Employee::all();
+        $query = Employee::query();
+
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        if ($request->filled('employee_status')) {
+            $query->where('employee_status', $request->employee_status);
+        }
+
+        if ($request->filled('contract_type')) {
+            $query->where('contract_type', $request->contract_type);
+        }
+
+        if ($request->filled('position_id')) {
+            $query->where('position_id', $request->position_id);
+        }
+
+        if ($request->filled('department_id')) {
+            $query->whereHas('position.department', function ($q) use ($request) {
+                $q->where('id', $request->department_id);
+            });
+        }
+
+
+        $employees = $query->get();
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$fileName\"",
+        ];
+
+        $callback = function() use ($employees) {
+            $file = fopen('php://output', 'w');
+
+            // Tulis header kolom
+            fputcsv($file, [
+                'ID', 
+                'employee_id', 
+                'nik',
+                'first_name',
+                'last_name',
+                'position_id',
+                'address',
+                'email',
+                'phone',
+                'birth_place',
+                'birth_date',
+                'education',
+                'religion',
+                'marital_status',
+                'citizenship',
+                'gender',
+                'blood_type',
+                'salary',
+                'contract_type',
+                'bank_code',
+                'account_number',
+                'join_date',
+                'resign_date',
+                'employee_photo',
+                'employee_status',
+                ]
+            );
+
+            // Tulis data tiap baris
+            foreach ($employees as $employee) {
+                fputcsv($file, [
+                $employee->id,
+                $employee->employee_id,
+                $employee->nik,
+                $employee->first_name,
+                $employee->last_name,
+                $employee->position_id,
+                $employee->address,
+                $employee->email,
+                $employee->phone,
+                $employee->birth_place,
+                $employee->birth_date,
+                $employee->education,
+                $employee->religion,
+                $employee->marital_status,
+                $employee->citizenship,
+                $employee->gender,
+                $employee->blood_type,
+                $employee->salary,
+                $employee->contract_type,
+                $employee->bank_code,
+                $employee->account_number,
+                $employee->join_date,
+                $employee->resign_date,
+                $employee->employee_photo,
+                $employee->employee_status,
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
 }

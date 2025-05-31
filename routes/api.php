@@ -29,7 +29,7 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('payment', [PaymentController::class, 'createInvoice'])->name('payment');
     Route::post('order_summary', [PaymentController::class, 'getOrderSummary'])->name('order_summary');
     Route::post('/xendit/webhook', [PaymentController::class, 'handle']);
-    
+    Route::get('/employees/export-csv', [EmployeeController::class, 'exportCsv'])->name('employees.exportCsv');
 });
 
 Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
@@ -58,4 +58,5 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::get('employee/{id}', [EmployeeController::class, 'show']);
     Route::post('employee', [EmployeeController::class, 'store']);
     Route::patch('employee/{id}', [EmployeeController::class, 'update']);
+    // Route::get('/employees/export-csv', [EmployeeController::class, 'exportCsv'])->name('employees.exportCsv');
 });
