@@ -29,7 +29,7 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('payment', [PaymentController::class, 'createInvoice'])->name('payment');
     Route::post('order_summary', [PaymentController::class, 'getOrderSummary'])->name('order_summary');
     Route::post('/xendit/webhook', [PaymentController::class, 'handle']);
-    
+    // Route::get('/employees/export-csv', [EmployeeController::class, 'exportCsv'])->name('employees.exportCsv');
 });
 
 Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
@@ -54,8 +54,14 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::get('department-position', [FormDataController::class, 'getDepartmentPosition']);
     Route::get('dashboard', [DashboardController::class, 'approvalStatus']);
 
-    Route::get('employee', [EmployeeController::class, 'index']);
-    Route::get('employee/{id}', [EmployeeController::class, 'show']);
-    Route::post('employee', [EmployeeController::class, 'store']);
-    Route::patch('employee/{id}', [EmployeeController::class, 'update']);
+    Route::get('employees', [EmployeeController::class, 'index']);
+    Route::get('employees/{id}', [EmployeeController::class, 'show']);
+    Route::post('employees', [EmployeeController::class, 'store']);
+    Route::patch('employees/{id}', [EmployeeController::class, 'update']);
+    Route::get('/employees/export-csv', [EmployeeController::class, 'exportCsv']);
+    Route::post('/employees/preview-csv', [EmployeeController::class, 'previewCsv']);
+    Route::post('/employees/confirm-import', [EmployeeController::class, 'confirmImport']);
+    Route::post('/employees/import-csv', [EmployeeController::class, 'importCsv']);
+    Route::post('/employees/{employee_id}/reset-password', [EmployeeController::class, 'resetPassword']);
+
 });
