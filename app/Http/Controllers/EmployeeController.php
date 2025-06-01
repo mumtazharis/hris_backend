@@ -142,7 +142,7 @@ class EmployeeController extends Controller
                 },
             ],
 
-            'salary' => 'number|min:0',
+            'salary' => 'nullable|numeric|min:0',
             'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:10000',
         ]);
 
