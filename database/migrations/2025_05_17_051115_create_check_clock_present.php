@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('present_detail_cc', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ck_id')->constrained('check_clocks');
+            $table->foreignId('ck_id')->constrained('check_clocks')->onDelete('cascade');
             $table->string('check_clock_type'); // berisi in, out, break_start, break_end, sick, permit, leave(cuti)
             $table->time('check_clock_time');
             $table->string('latitude')->nullable(); // berisi koordinat lokasi absensi seperti gps, dll

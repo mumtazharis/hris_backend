@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('check_clocks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees');
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->foreignId('approver_id')->constrained('users');
             $table->dateTime('check_clock_date');
             $table->enum('status', ['present', 'absent'])->default('present');
