@@ -33,7 +33,7 @@ class EmployeeFactory extends Factory
             'gender' => $this->faker->randomElement(['male', 'female']),
             'blood_type' => $this->faker->randomElement(['A', 'B', 'AB', 'O']),
             'join_date' => $this->faker->date('Y-m-d'),
-            'resign_date' => null,
+            'exit_date' => null,
             'employee_photo' => 'default.jpg',
             'employee_status' => $this->faker->randomElement(['active', 'inactive']),
         ];

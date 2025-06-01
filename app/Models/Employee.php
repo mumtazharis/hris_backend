@@ -34,8 +34,9 @@ class Employee extends Model
     'contract_type',
     'bank_code',
     'account_number',
+    'contract_end',
     'join_date',
-    'resign_date',
+    'exit_date',
     'employee_photo',
     'employee_status',
 ];
