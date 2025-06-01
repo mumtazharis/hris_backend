@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DeletedEmployeeLog;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\User;
@@ -85,7 +86,7 @@ class EmployeeController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:17|unique:employees',
-            'nik' => 'nullable|string|max:16|unique:employees',
+            'nik' => 'nullable|string|size:16|unique:employees',
             'gender' => 'nullable|in:Male,Female',
             'education' => 'nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
             'birth_place' => 'nullable|string|max:100',
@@ -225,7 +226,7 @@ class EmployeeController extends Controller
             // Personal Information
             'first_name' => 'sometimes|required|string|max:255',
             'last_name' => 'sometimes|required|string|max:255',
-            'nik' => 'sometimes|nullable|string|max:16|unique:employees,nik,' . $employee->id,
+            'nik' => 'sometimes|nullable|string|size:16|unique:employees,nik,' . $employee->id,
             'gender' => 'sometimes|nullable|in:Male,Female',
             'education' => 'sometimes|nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
             'birth_place' => 'sometimes|nullable|string|max:100',
@@ -340,7 +341,7 @@ class EmployeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $employee_id)
+    public function permanentDelete(string $employee_id)
     {
         // $employee = Employee::find($id);
         $employee = Employee::where('employee_id', $employee_id)->first();
@@ -349,11 +350,24 @@ class EmployeeController extends Controller
             return response()->json(['message' => 'Employee not found'], 404);
         }
 
+        $employee_user = User::find($employee->user_id);
+        if ($employee_user){
+            $admin_user = Auth::user();
+            if ($admin_user){
+                $deleted_user_data = [
+                    'admin_id' => $admin_user->id,
+                    'deleted_employee_name' => $employee_user->full_name,
+
+                ];
+                DeletedEmployeeLog::create($deleted_user_data);
+                $employee_user->delete();
+            }
+        }
+        
+        
         if ($employee->employee_photo) {
             Storage::delete('public/employee_photos/' . $employee->employee_photo);
         }
-
-        $employee->delete();
         return response()->json(['message' => 'Employee deleted successfully'], 200);
     }
 
@@ -490,7 +504,7 @@ class EmployeeController extends Controller
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'phone' => 'nullable|string|max:17|unique:employees,phone',
-                'nik' => 'nullable|string|max:16|unique:employees,nik',
+                'nik' => 'nullable|string|size:16|unique:employees,nik',
                 'position_id' => 'nullable|exists:positions,id',
                 'birth_date' => 'nullable|date',
                 'join_date' => 'nullable|date',
@@ -532,7 +546,7 @@ class EmployeeController extends Controller
             'employees.*.first_name' => 'required|string|max:255',
             'employees.*.last_name' => 'required|string|max:255',
             'employees.*.phone' => 'nullable|string|max:17|unique:employees,phone',
-            'employees.*.nik' => 'nullable|string|max:16|unique:employees,nik',
+            'employees.*.nik' => 'nullable|string|size:16|unique:employees,nik',
             'employees.*.position_id' => 'nullable|exists:positions,id',
             'employees.*.birth_date' => 'nullable|date',
             'employees.*.join_date' => 'nullable|date',
