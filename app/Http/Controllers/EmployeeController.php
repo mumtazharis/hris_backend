@@ -360,7 +360,6 @@ class EmployeeController extends Controller
     public function exportCsv(Request $request)
     {
         $fileName = 'employee.csv';
-        $employees = Employee::all();
         $query = Employee::query();
 
         if ($request->filled('employee_id')) {
