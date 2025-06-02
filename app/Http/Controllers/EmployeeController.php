@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use function Laravel\Prompts\password;
 use function Symfony\Component\Clock\now;
+use Illuminate\Support\Carbon;
 
 class EmployeeController extends Controller
 {
@@ -51,9 +52,9 @@ class EmployeeController extends Controller
             e.first_name || ' ' || e.last_name as \"name\",
             e.gender,
             e.phone,
+            d.name as \"department\",
             p.name as \"position\",
             e.contract_type as \"contract_type\",
-            ccs.name as \"workType\",
             e.employee_status as \"status\"
             from employees e 
             left join positions p on e.position_id = p.id
@@ -154,7 +155,7 @@ class EmployeeController extends Controller
             ],
 
             'salary' => 'nullable|numeric|min:0',
-            'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:10000',
+            'employee_photo' => 'nullable|image|max:5120',
         ]);
 
         DB::beginTransaction();
@@ -184,9 +185,9 @@ class EmployeeController extends Controller
             // 6. Kelola upload foto karyawan
             if ($request->hasFile('employee_photo')) {
        
-                $path = $request->file('employee_photo')->store('public/employee_photos');
-                $fileName = basename($path);
-                $employeeData['employee_photo'] = $fileName;
+                $path = $request->file('employee_photo')->store('employee_photo', 's3');
+                // $fileName = basename($path);
+                $employeeData['employee_photo'] = $path;
 
             } else {
                 unset($employeeData['employee_photo']);
@@ -232,12 +233,21 @@ class EmployeeController extends Controller
         unset($employeeData['position']);
         unset($employeeData['bank']);
 
+        
+        $employeePhotoUrl = null;
+        if (!empty($employee->employee_photo)) {
+            $employeePhotoUrl = Storage::disk('s3')->temporaryUrl(
+                $employee->employee_photo,
+                Carbon::now()->addMinutes(10) // berlaku 10 menit
+            );
+        }
         return response()->json([
             'employee' => $employeeData,
             'department_id' => $employee->position->department->id ?? null,
             'position_name' => $employee->position->name ?? null,
             'department_name' => $employee->position->department->name ?? null,
             'bank_name' => $employee->bank->name ?? null,
+            'employee_photo_url' => $employeePhotoUrl,
         ]);
     }
 
@@ -346,7 +356,7 @@ class EmployeeController extends Controller
                     }
                 },
             ],
-            'employee_photo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'employee_photo' => 'sometimes|nullable|image|max:5120',
         ]);
 
         DB::beginTransaction();
@@ -369,39 +379,22 @@ class EmployeeController extends Controller
                 $user->update($userDataToUpdate);
             }
 
-            // 5. Siapkan data untuk update Employee
-            // Kecualikan 'password' dan 'password_confirmation' karena itu hanya untuk tabel users
+        
             $employeeDataToUpdate = collect($validatedData)->except(['password'])->all();
 
-            // 6. Penanganan update foto karyawan
             if ($request->hasFile('employee_photo')) {
                 // Hapus foto lama jika ada
-                if ($employee->employee_photo) {
-                    Storage::delete('public/employee_photos/' . $employee->employee_photo);
+                if ($employee->employee_photo && Storage::disk('s3')->exists($employee->employee_photo)) {
+                    Storage::disk('s3')->delete($employee->employee_photo);
                 }
-                // Simpan foto baru
-                $fileName = Str::random(8) . '.' . $request->file('employee_photo')->getClientOriginalExtension();
-                $request->file('employee_photo')->storeAs('public/employee_photos', $fileName);
-                $employeeDataToUpdate['employee_photo'] = $fileName;
-            // } elseif (array_key_exists('employee_photo', $request->all()) && is_null($request->input('employee_photo'))) {
-            //     // Jika input 'employee_photo' dikirim dengan nilai null (berarti ingin menghapus foto)
-            //     if ($employee->employee_photo) {
-            //         Storage::delete('public/employee_photos/' . $employee->employee_photo);
-            //     }
-            //     $employeeDataToUpdate['employee_photo'] = null; 
+
+                // Upload foto baru
+                $path = $request->file('employee_photo')->store('employee_photo', 's3');
+                $employeeDataToUpdate['employee_photo'] = $path;
             } else {
                 unset($employeeDataToUpdate['employee_photo']);
             }
 
-
-            // if (!is_null($employeeDataToUpdate['position_id'])) {
-            //     $position = Position::find($employeeDataToUpdate['position_id']);
-            //     if ($position) {
-            //         $employeeDataToUpdate['department_id'] = $position->department_id;
-            //     }
-            // }
-
-            // 8. Update data Employee
             $employee->update($employeeDataToUpdate);
 
             DB::commit();
@@ -651,7 +644,13 @@ class EmployeeController extends Controller
                 'employee_status' => 'required|in:Active,Retire,Resign,Fired'
             ]);
 
+            $position = Position::with('department')->find($data['position_id']);
+            if ($position) {
+                $data['position_name'] = $position->name;
+                $data['department_name'] = $position->department->name ?? null;
+            }
             if ($validator->fails()) {
+                // $data['errors'] = $validator->errors()->toArray();
                 $invalidRows[] = $data;
             } else {
                 $validRows[] = $data;
