@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Validation\Rule;
 use function Laravel\Prompts\password;
 use function Symfony\Component\Clock\now;
 
@@ -79,14 +79,38 @@ class EmployeeController extends Controller
         // 2. Validasi input dari request
         $validatedData = $request->validate([
             // Validasi untuk data USER (login)
-            'email' => 'required|string|email|max:255|unique:employees,email', 
-            'password' => 'nullable|string|min:6', 
+            // 'email' => 'required|string|email|max:255|unique:employees,email',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('employees')->where(fn ($query) =>
+                    $query->where('employee_status', 'Active')
+                ),
+            ],
 
             // Validasi untuk data EMPLOYEE (sesuai skema tabel employees)
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:17|unique:employees',
-            'nik' => 'nullable|string|size:16|unique:employees',
+            // 'phone' => 'nullable|string|max:17|unique:employees',
+            'phone' => [
+                'required',
+                'string',
+                'max:17',
+                Rule::unique('employees')->where(fn ($query) =>
+                    $query->where('employee_status', 'Active')
+                ),
+            ],
+            // 'nik' => 'nullable|string|size:16|unique:employees',
+            'nik' => [
+                'required',
+                'string',
+                'size:16',
+                Rule::unique('employees')->where(function ($query) {
+                    return $query->where('employee_status', 'Active');
+                }),
+            ],
+
             'gender' => 'nullable|in:Male,Female',
             'education' => 'nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
             'birth_place' => 'nullable|string|max:100',
@@ -97,10 +121,28 @@ class EmployeeController extends Controller
             'religion' => 'nullable|string|max:100',
             'position_id' => 'nullable|exists:positions,id',
             // 'department_id' => 'nullable|exists:departments,id',
-            'contract_type' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
+            'contract_type' => 'nullable|in:Permanent,Internship,Contract',
             'address' => 'nullable|string|max:255',
             'bank_code' => 'nullable|exists:banks,code',
             'account_number' => 'nullable',
+            'contract_end' => [
+                'nullable',
+                'date',
+                'after_or_equal:today',
+                function ($attribute, $value, $fail) use ($request) {
+                    $type = $request->input('contract_type');
+
+                    if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
+                        $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                    }
+
+                    if ($type === 'Permanent' && !is_null($value)) {
+                        $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                    }
+                },
+            ],
+
+            'salary' => 'nullable|numeric|min:0',
             'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:10000',
         ]);
 
@@ -113,14 +155,11 @@ class EmployeeController extends Controller
                 $uniqueRandomCode = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
                 $generatedEmployeeId = "{$currentYearTwoDigits}{$uniqueRandomCode}";
             } while (Employee::where('employee_id', $generatedEmployeeId)->exists());
-
-            // password default -> employee_id
-            $password = $request['password'] ?? $generatedEmployeeId;
             
             // 4. Buat User baru dengan role 'employee'
             $user = User::create([
                 'full_name' => $request['first_name'] . ' ' . $request['last_name'],
-                'password' => Hash::make($password), 
+                'password' => Hash::make($generatedEmployeeId), 
                 'role' => 'employee',
                 'company_id' => $hrUser->company_id,
                 'is_profile_complete' => false,
@@ -226,7 +265,15 @@ class EmployeeController extends Controller
             // Personal Information
             'first_name' => 'sometimes|required|string|max:255',
             'last_name' => 'sometimes|required|string|max:255',
-            'nik' => 'sometimes|nullable|string|size:16|unique:employees,nik,' . $employee->id,
+            'nik' => [
+                'sometimes',
+                'required',
+                'string',
+                'size:16',
+                Rule::unique('employees')->where(function ($query) {
+                    return $query->where('employee_status', 'Active');
+                })->ignore($employee->id),
+            ],
             'gender' => 'sometimes|nullable|in:Male,Female',
             'education' => 'sometimes|nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
             'birth_place' => 'sometimes|nullable|string|max:100',
@@ -238,8 +285,25 @@ class EmployeeController extends Controller
             'address' => 'sometimes|nullable|string|max:255',
 
             // Contact Information (untuk User dan Employee)
-            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'sometimes|nullable|string|max:17|unique:employees,phone,' . $employee->id,
+            'email' => [
+                'sometimes',
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('employees')->where(fn ($query) =>
+                    $query->where('employee_status', 'Active')
+                )->ignore($employee->id),
+            ],
+            // 'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:17',
+                Rule::unique('employees')->where(fn ($query) =>
+                    $query->where('employee_status', 'Active')
+                )->ignore($employee->id),
+            ],
 
             // **Tambahkan validasi untuk password baru di sini**
             'password' => 'sometimes|nullable|string|min:8|confirmed', // 'confirmed' membutuhkan 'password_confirmation, bingung ganti password nanti ada konfirmasinya nggak?
@@ -251,11 +315,38 @@ class EmployeeController extends Controller
 
             'salary' => 'sometimes|nullable|string',
             'bank_code' => 'sometimes|nullable|exists:banks,code',
-            'contract_type' => 'sometimes|nullable|in:Permanent,Internship,Part-time,Outsource',
+            'contract_type' => 'sometimes|nullable|in:Permanent,Internship, Contract',
+            'contract_end' => [
+                'sometimes',
+                'nullable',
+                'date',
+                'after_or_equal:today',
+                function ($attribute, $value, $fail) use ($request) {
+                    $type = $request->input('contract_type');
+
+                    if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
+                        $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                    }
+
+                    if ($type === 'Permanent' && !is_null($value)) {
+                        $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                    }
+                },
+            ],
+
             'join_date' => 'sometimes|nullable|date',
-            'resign_date' => 'sometimes|nullable|date',
-            'employee_status' => 'sometimes|nullable|string',
-            'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'exit_date' => 'sometimes|nullable|date',
+            'employee_status' => [
+                'sometimes',
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) use ($employee) {
+                    if ($value === 'Active' && $employee->employee_status !== 'Active') {
+                        $fail('Status tidak bisa diubah menjadi Active karena sebelumnya sudah bukan Active. Silakan lakukan rejoin.');
+                    }
+                },
+            ],
+            'employee_photo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -431,8 +522,9 @@ class EmployeeController extends Controller
                 'contract_type',
                 'bank_code',
                 'account_number',
+                'contract_end',
                 'join_date',
-                'resign_date',
+                'exit_date',
                 'employee_photo',
                 'employee_status',
                 ]
@@ -462,8 +554,9 @@ class EmployeeController extends Controller
                 $employee->contract_type,
                 $employee->bank_code,
                 $employee->account_number,
+                $employee->contract_end,
                 $employee->join_date,
-                $employee->resign_date,
+                $employee->exit_date,
                 $employee->employee_photo,
                 $employee->employee_status,
                 ]);
@@ -493,27 +586,66 @@ class EmployeeController extends Controller
             $data = array_combine($header, $row);
 
             // Normalisasi tanggal kosong
-            foreach (['birth_date', 'join_date', 'resign_date'] as $dateField) {
+            foreach (['birth_date','contract_end', 'join_date', 'exit_date'] as $dateField) {
                 if (isset($data[$dateField]) && trim($data[$dateField]) === '') {
                     $data[$dateField] = null;
                 }
             }
 
             $validator = Validator::make($data, [
-                'email' => 'required|email|unique:employees,email',
+                'email' => [
+                    'required',
+                    'email',
+                    'max:255',
+                    Rule::unique('employees')->where(fn ($query) =>
+                        $query->where('employee_status', 'Active')
+                    ),
+                ],
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
-                'phone' => 'nullable|string|max:17|unique:employees,phone',
-                'nik' => 'nullable|string|size:16|unique:employees,nik',
+                'phone' => [
+                    'required',
+                    'string',
+                    'max:17',
+                    Rule::unique('employees')->where(fn ($query) =>
+                        $query->where('employee_status', 'Active')
+                    ),
+                ],
+                'nik' => [
+                    'required',
+                    'string',
+                    'size:16',
+                    Rule::unique('employees')->where(fn ($query) =>
+                        $query->where('employee_status', 'Active')
+                    ),
+                ],
+
                 'position_id' => 'nullable|exists:positions,id',
                 'birth_date' => 'nullable|date',
+                'contract_end' => [
+                    'nullable',
+                    'date',
+                    'after_or_equal:today',
+                    function ($attribute, $value, $fail) use ($request) {
+                        $type = $request->input('contract_type');
+
+                        if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
+                            $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                        }
+
+                        if ($type === 'Permanent' && !is_null($value)) {
+                            $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                        }
+                    },
+                ],
+
                 'join_date' => 'nullable|date',
-                'resign_date' => 'nullable|date',
+                'exit_date' => 'nullable|date',
                 'education' => 'nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
                 'gender' => 'nullable|in:Male,Female',
                 'blood_type' => 'nullable|in:A,B,AB,O,Unknown',
                 'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
-                'contract_type' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
+                'contract_type' => 'nullable|in:Permanent,Internship',
                 'bank_code' => 'nullable|exists:banks,code',
             ]);
 
@@ -542,20 +674,58 @@ class EmployeeController extends Controller
         
         $request->validate([
             'employees' => 'required|array',
-            'employees.*.email' => 'required|email|unique:employees,email',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('employees')->where(fn ($query) =>
+                    $query->where('employee_status', 'Active')
+                ),
+            ],
             'employees.*.first_name' => 'required|string|max:255',
             'employees.*.last_name' => 'required|string|max:255',
-            'employees.*.phone' => 'nullable|string|max:17|unique:employees,phone',
-            'employees.*.nik' => 'nullable|string|size:16|unique:employees,nik',
+            'phone' => [
+                'required',
+                'string',
+                'max:17',
+                Rule::unique('employees')->where(fn ($query) =>
+                    $query->where('employee_status', 'Active')
+                ),
+            ],
+            'employees.*.nik' => [
+                'required',
+                'string',
+                'size:16',
+                Rule::unique('employees')->where(fn ($query) =>
+                    $query->where('employee_status', 'Active')
+                ),
+            ],
+
             'employees.*.position_id' => 'nullable|exists:positions,id',
             'employees.*.birth_date' => 'nullable|date',
+            'employees.*.contract_end' => [
+                'nullable',
+                'date',
+                'after_or_equal:today',
+                function ($attribute, $value, $fail) use ($request) {
+                    $type = $request->input('contract_type');
+
+                    if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
+                        $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                    }
+
+                    if ($type === 'Permanent' && !is_null($value)) {
+                        $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                    }
+                },
+            ],
             'employees.*.join_date' => 'nullable|date',
-            'employees.*.resign_date' => 'nullable|date',
+            'employees.*.exit_date' => 'nullable|date',
             'employees.*.education' => 'nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
             'employees.*.gender' => 'nullable|in:Male,Female',
             'employees.*.blood_type' => 'nullable|in:A,B,AB,O,Unknown',
             'employees.*.marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
-            'employees.*.contract_type' => 'nullable|in:Permanent,Internship,Part-time,Outsource',
+            'employees.*.contract_type' => 'nullable|in:Permanent,Internship',
             'employees.*.bank_code' => 'nullable|exists:banks,code',
         ]);
 
@@ -591,11 +761,11 @@ class EmployeeController extends Controller
                 Employee::create([
                     'user_id' => $user->id,
                     'employee_id' => $data['employee_id'],
-                    'nik' => $data['nik'] ?? null,
+                    'nik' => $data['nik'],
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
                     'email' => $data['email'],
-                    'phone' => $data['phone'] ?? null,
+                    'phone' => $data['phone'],
                     'position_id' => $data['position_id'] ?? null,
                     'address' => $data['address'] ?? null,
                     'birth_place' => $data['birth_place'] ?? null,
@@ -610,10 +780,11 @@ class EmployeeController extends Controller
                     'contract_type' => $data['contract_type'] ?? null,
                     'bank_code' => $data['bank_code'] ?? null,
                     'account_number' => $data['account_number'] ?? null,
-                    'join_date' => $data['join_date'] ?? now(),
-                    'resign_date' => $data['resign_date'] ?? null,
+                    'contract_end' => $data['contract_end'] ?? null,
+                    'join_date' => $data['join_date'] ?? null,
+                    'exit_date' => $data['exit_date'] ?? null,
                     'employee_photo' => $data['employee_photo'] ?? null,
-                    'employee_status' => $data['employee_status'] ?? 'Active',
+                    'employee_status' => $data['employee_status'],
                 ]);
             }
 
@@ -680,7 +851,7 @@ class EmployeeController extends Controller
     //             'position_id' => 'nullable|exists:positions,id',
     //             'birth_date' => 'nullable|date',
     //             'join_date' => 'nullable|date',
-    //             'resign_date' => 'nullable|date|nullable',
+    //             'exit_date' => 'nullable|date|nullable',
     //             'education' => 'nullable|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
     //             'gender' => 'nullable|in:Male,Female',
     //             'blood_type' => 'nullable|in:A,B,AB,O,Unknown',
@@ -761,12 +932,12 @@ class EmployeeController extends Controller
     //                 'bank_code' => $data['bank_code'] ?? null,
     //                 'account_number' => $data['account_number'] ?? null,
     //                 'join_date' => $data['join_date'] ?? now(),
-    //                 'resign_date' => $data['resign_date'] ?? null,
+    //                 'exit_date' => $data['exit_date'] ?? null,
     //                 'employee_photo' => $data['employee_photo'] ?? null,
     //                 'employee_status' => $data['employee_status'] ?? 'Active',
     //             ];
     //             // Format tanggal kosong menjadi null
-    //             $employeeData['resign_date'] = !empty($employeeData['resign_date']) ? $employeeData['resign_date'] : null;
+    //             $employeeData['exit_date'] = !empty($employeeData['exit_date']) ? $employeeData['exit_date'] : null;
     //             $employeeData['birth_date'] = !empty($employeeData['birth_date']) ? $employeeData['birth_date'] : null;
     //             $employeeData['join_date'] = !empty($employeeData['join_date']) ? $employeeData['join_date'] : now();
 
