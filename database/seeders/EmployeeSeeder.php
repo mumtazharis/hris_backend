@@ -65,7 +65,7 @@ class EmployeeSeeder extends Seeder
             ],
             [
                 'user_id' => 4,
-                'ck_setting_id' => 3,
+                'ck_setting_id' => 1,
                 'employee_id' => 'EMP004',
                 'nik' => '556677889',
                 'first_name' => 'Bob',
@@ -140,7 +140,7 @@ class EmployeeSeeder extends Seeder
             ],
             [
                 'user_id' => 8,
-                'ck_setting_id' => 3,
+                'ck_setting_id' => 2,
                 'employee_id' => 'EMP008',
                 'nik' => '889900112',
                 'first_name' => 'Eve',

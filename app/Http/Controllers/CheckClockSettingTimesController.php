@@ -12,10 +12,22 @@ class CheckClockSettingTimesController extends Controller
      */
     public function index()
     {
-        $times = CheckClockSettingTimes::whereNull('deleted_at')
-        ->orderBy('created_at', 'desc')
-        ->distinct()
-        ->get();
+        $times = CheckClockSettingTimes::select(
+            'check_clock_setting_times.id as data_id',
+            'check_clock_settings.name as worktype',
+            'check_clock_setting_times.day',
+            'check_clock_setting_times.clock_in',
+            'check_clock_setting_times.clock_out',
+            'check_clock_settings.latitude',
+            'check_clock_settings.longitude',
+            'check_clock_settings.radius',
+            'check_clock_setting_times.created_at',
+        )
+            ->join('check_clock_settings', 'check_clock_setting_times.ck_setting_id', '=', 'check_clock_settings.id')
+            ->whereNull('check_clock_setting_times.deleted_at')
+            ->orderBy('check_clock_setting_times.created_at', 'desc')
+            ->distinct()
+            ->get();
         if ($times) {
             return response()->json($times);
         }
@@ -38,7 +50,7 @@ class CheckClockSettingTimesController extends Controller
 
         $time = CheckClockSettingTimes::create($validated);
 
-        if ($time){
+        if ($time) {
             return response()->json(['success' => ['message' => 'Successfully update the data']], 200);
         }
 
@@ -55,26 +67,51 @@ class CheckClockSettingTimesController extends Controller
         if ($record) {
             return response()->json($record);
         }
-        return response()->json(['error' => ['message' => 'Failed to get the data']], 401);
+        return response()->json(['errors' => ['message' => 'Failed to get the data']], 401);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CheckClockSettingTimes $checkClockSettingTimes)
+    public function update(Request $request, string $checkClockSettingTimes)
     {
-        $validated = $request->validate([
-            'ck_setting_id' => 'required|exists:check_clock_settings,id',
-            'day' => 'required|string|max:255',
-            'clock_in' => 'required|date_format:H:i:s',
-            'clock_out' => 'required|date_format:H:i:s|after:clock_in',
-            'break_start' => 'required|date_format:H:i:s|after:clock_in|before:clock_out',
-            'break_end' => 'required|date_format:H:i:s|after:break_start|before:clock_out',
-        ]);
+        try {
+            $validated = $request->validate([
+                'clockIn' => 'required|date_format:H:i',
+                'clockOut' => 'required|date_format:H:i|after:clock_in',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'radius' => 'nullable|numeric',
+            ]);
 
-        $checkClockSettingTimes->update($validated);
+            $record = CheckClockSettingTimes::findOrFail($checkClockSettingTimes);
         
-        return response()->json($validated);
+            if (!$record) {
+                return response()->json(['errors' => ['message' => 'Record not found']], 404);
+            }
+
+            $record->clock_in = $validated['clockIn'];
+            $record->clock_out = $validated['clockOut'];
+
+            if (isset($validated['latitude'])) {
+                $record->latitude = $validated['latitude'];
+            }
+            if (isset($validated['longitude'])) {
+                $record->longitude = $validated['longitude'];
+            }
+            if (isset($validated['radius'])) {
+                $record->radius = $validated['radius'];
+            }
+            if ($record->save()) {
+                return response()->json(['success' => ['message' => 'Successfully update the data']], 200);
+            } 
+            return response()->json(['errors' => ['message' => 'Failed to update the data']], 400);
+        } catch (\Exception $e) {
+            return response()->json(['errors' => ['message' => 'Failed to update the data: ' . $e->getMessage()]], 401);
+        }
+        
+
+        // return response()->json(['errors' => ['message' => 'Failed to update the data']], 401);
     }
 
     /**
@@ -89,6 +126,5 @@ class CheckClockSettingTimesController extends Controller
             return response()->json(['errors' => ['message' => 'The Setting Times have been removed']], 200);
         }
         return response()->json(['errors' => ['message' => 'Cannot find the data']], 401);
-
     }
 }

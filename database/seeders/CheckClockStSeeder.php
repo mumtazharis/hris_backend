@@ -26,12 +26,5 @@ class CheckClockStSeeder extends Seeder
             'longitude' => 106.816666,
             'radius' => 500,
         ]);
-
-        CheckClockSetting::create([
-            'name' => 'Hybrid',
-            'latitude' => null,
-            'longitude' => null,
-            'radius' => null,
-        ]);
     }
 }

@@ -14,7 +14,7 @@ class CheckClockStTimesSeeder extends Seeder
     public function run(): void
     {
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        $ckSettings = ['WFA', 'WFO', 'Hybrid'];
+        $ckSettings = ['WFA', 'WFO'];
 
         foreach ($ckSettings as $index => $ckSetting) {
             foreach ($days as $day) {
