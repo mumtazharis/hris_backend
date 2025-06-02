@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->unique()->onDelete('cascade');
+            $table->string('company_id');
             $table->foreignId('ck_setting_id')->nullable()->constrained('check_clock_settings');
             $table->string('employee_id')->unique();
             $table->string('nik')->nullable();
@@ -47,23 +48,25 @@ return new class extends Migration
             $table->enum('employee_status', ['Active', 'Retire', 'Resign', 'Fired'])->default('Active')->nullable();
             $table->timestamps();
         });
+
         DB::statement("
-            CREATE UNIQUE INDEX unique_nik_active_only
-            ON employees (nik)
+            CREATE UNIQUE INDEX unique_nik_company_active
+            ON employees (company_id, nik)
             WHERE employee_status = 'Active'
         ");
 
         DB::statement("
-            CREATE UNIQUE INDEX unique_email_active_only
-            ON employees (email)
+            CREATE UNIQUE INDEX unique_email_company_active
+            ON employees (company_id, email)
             WHERE employee_status = 'Active'
         ");
 
         DB::statement("
-            CREATE UNIQUE INDEX unique_phone_active_only
-            ON employees (phone)
+            CREATE UNIQUE INDEX unique_phone_company_active
+            ON employees (company_id, phone)
             WHERE employee_status = 'Active'
         ");
+
     }
 
     /**
