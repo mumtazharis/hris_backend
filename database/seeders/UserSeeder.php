@@ -75,7 +75,7 @@ class UserSeeder extends Seeder
                 'auth_provider' => 'local',
             ],
             [
-                'company_id' => 'COMP001',
+                'company_id' => 'COMP002',
                 'full_name' => 'Admin User Two',
                 'email' => 'admin2@example.com',
                 'phone' => '081298765436',
@@ -85,7 +85,7 @@ class UserSeeder extends Seeder
                 'auth_provider' => 'local',
             ],
             [
-                'company_id' => 'COMP001',
+                'company_id' => 'COMP002',
                 'full_name' => 'Employee Seven',
                 'email' => 'employee7@example.com',
                 'phone' => '081298765437',
@@ -95,7 +95,7 @@ class UserSeeder extends Seeder
                 'auth_provider' => 'local',
             ],
             [
-                'company_id' => 'COMP001',
+                'company_id' => 'COMP002',
                 'full_name' => 'Employee Eight',
                 'email' => 'employee8@example.com',
                 'phone' => '081298765438',
@@ -105,7 +105,7 @@ class UserSeeder extends Seeder
                 'auth_provider' => 'local',
             ],
             [
-                'company_id' => 'COMP001',
+                'company_id' => 'COMP002',
                 'full_name' => 'Employee Nine',
                 'email' => 'employee9@example.com',
                 'phone' => '081298765439',

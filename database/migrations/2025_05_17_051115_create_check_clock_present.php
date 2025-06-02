@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('ck_id')->constrained('check_clocks');
             $table->string('check_clock_type'); // berisi in, out, break_start, break_end, sick, permit, leave(cuti)
-            $table->time('check_clock_time');
+            $table->time('check_clock_time')->nullable();
             $table->string('latitude')->nullable(); // berisi koordinat lokasi absensi seperti gps, dll
             $table->string('longitude')->nullable(); // berisi koordinat lokasi absensi seperti gps, dll
             $table->string('evidence')->nullable(); // berisi bukti absensi seperti foto, dll

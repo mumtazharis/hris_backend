@@ -51,7 +51,7 @@ class CheckClockController extends Controller
             'ccs.name as work_type',
             DB::raw('CASE 
                 WHEN MAX(CASE WHEN pdc.check_clock_type = \'in\' THEN pdc.check_clock_time END) IS NULL THEN cc.status
-                WHEN MAX(CASE WHEN pdc.check_clock_type = \'in\' THEN pdc.check_clock_time END) > MIN(ccst.clock_in) THEN \'Late\'
+                WHEN MAX(CASE WHEN pdc.check_clock_type = \'in\' THEN pdc.check_clock_time END) < MIN(ccst.clock_in) THEN \'Late\'
                 ELSE \'On Time\'
             END as status'),
             DB::raw('MAX(cc.status_approval) as approval_status'),
