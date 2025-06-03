@@ -45,6 +45,8 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::resource('check-clock-settings', CheckClockSettingController::class);
     Route::resource('check-clock-setting-times', CheckClockSettingTimesController::class);
 
+    Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
+
     // Route::post('/verify-token', function () {
     // return response()->json([
     //     // 'user' => $request->user(),

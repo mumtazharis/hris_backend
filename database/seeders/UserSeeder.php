@@ -75,7 +75,7 @@ class UserSeeder extends Seeder
                 'auth_provider' => 'local',
             ],
             [
-                'company_id' => 'COMP001',
+                'company_id' => 'COMP002',
                 'full_name' => 'Employee Seven',
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
@@ -83,7 +83,7 @@ class UserSeeder extends Seeder
                 'auth_provider' => 'local',
             ],
             [
-                'company_id' => 'COMP001',
+                'company_id' => 'COMP002',
                 'full_name' => 'Employee Eight',
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
@@ -91,7 +91,7 @@ class UserSeeder extends Seeder
                 'auth_provider' => 'local',
             ],
             [
-                'company_id' => 'COMP001',
+                'company_id' => 'COMP002',
                 'full_name' => 'Employee Nine',
                 'password' => Hash::make('password123'),
                 'role' => 'employee',

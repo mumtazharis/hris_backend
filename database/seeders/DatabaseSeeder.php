@@ -24,6 +24,8 @@ class DatabaseSeeder extends Seeder
             CheckClockSeeder::class,
             DeletedEmployeeLogSeeder::class,
             PlansPriceSeeder::class,
+            AbsentCCSeeder::class,
+            PresentCCSeeder::class
         ]);
     }
 }
