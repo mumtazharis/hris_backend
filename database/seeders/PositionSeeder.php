@@ -72,5 +72,65 @@ class PositionSeeder extends Seeder
             'department_id' => 3,
             // 'salary' => 60000.00,
         ]);
+
+        Position::create([
+            'name' => 'CEO',
+            'department_id' => 4,
+            // 'salary' => 150000.00,
+        ]);
+
+        Position::create([
+            'name' => 'Manager',
+            'department_id' => 4,
+            // 'salary' => 50000.00,
+        ]);
+
+        Position::create([
+            'name' => 'CEO',
+            'department_id' => 5,
+            // 'salary' => 150000.00,
+        ]);
+
+        Position::create([
+            'name' => 'Manager',
+            'department_id' => 5,
+            // 'salary' => 50000.00,
+        ]);
+
+        Position::create([
+            'name' => 'CEO',
+            'department_id' => 6,
+            // 'salary' => 150000.00,
+        ]);
+
+        Position::create([
+            'name' => 'Manager',
+            'department_id' => 6,
+            // 'salary' => 50000.00,
+        ]);
+
+        Position::create([
+            'name' => 'Software Engineer',
+            'department_id' => 4,
+            // 'salary' => 75000.00,
+        ]);
+
+        Position::create([
+            'name' => 'Project Manager',
+            'department_id' => 5,
+            // 'salary' => 85000.00,
+        ]);
+
+        Position::create([
+            'name' => 'HR Specialist',
+            'department_id' => 6,
+            // 'salary' => 60000.00,
+        ]);
+        
+        Position::create([
+            'name' => 'Secretary',
+            'department_id' => 6,
+            // 'salary' => 60000.00,
+        ]);
     }
 }

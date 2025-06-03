@@ -36,7 +36,6 @@ class EmployeeSeeder extends Seeder
                 'join_date' => '2021-02-01',
                 'exit_date' => null,
                 'salary' => '1500000',
-                'employee_photo' => 'jane_smith.jpg',
                 'employee_status' => 'Active',
             ],
             [
@@ -62,7 +61,6 @@ class EmployeeSeeder extends Seeder
                 'join_date' => '2022-03-01',
                 'exit_date' => null,
                 'salary' => '1500000',
-                'employee_photo' => 'alice_johnson.jpg',
                 'employee_status' => 'Active',
             ],
             [
@@ -88,7 +86,6 @@ class EmployeeSeeder extends Seeder
                 'join_date' => '2023-04-01',
                 'exit_date' => null,
                 'salary' => '1500000',
-                'employee_photo' => 'bob_brown.jpg',
                 'employee_status' => 'Active',
             ],
             [
@@ -114,7 +111,6 @@ class EmployeeSeeder extends Seeder
                 'join_date' => '2024-05-01',
                 'exit_date' => null,
                 'salary' => '1500000',
-                'employee_photo' => 'charlie_davis.jpg',
                 'employee_status' => 'Active',
             ],
             [
@@ -141,7 +137,6 @@ class EmployeeSeeder extends Seeder
                 'join_date' => '2025-06-01',
                 'exit_date' => null,
                 'salary' => '1500000',
-                'employee_photo' => 'diana_evans.jpg',
                 'employee_status' => 'Active',
             ],
             [
@@ -167,7 +162,6 @@ class EmployeeSeeder extends Seeder
                 'join_date' => '2026-07-01',
                 'exit_date' => null, 
                 'salary' => '1500000',
-                'employee_photo' => 'eve_foster.jpg',
                 'employee_status' => 'Active',
             ],
             [
@@ -193,7 +187,6 @@ class EmployeeSeeder extends Seeder
                 'join_date' => '2027-08-01',
                 'exit_date' => null,
                 'salary' => '1500000',
-                'employee_photo' => 'frank_green.jpg',
                 'employee_status' => 'Active',
             ],
             [
@@ -220,7 +213,6 @@ class EmployeeSeeder extends Seeder
                 'join_date' => '2028-09-01',
                 'exit_date' => null,
                 'salary' => '1500000',
-                'employee_photo' => 'grace_harris.jpg',
                 'employee_status' => 'Active',
             ],
         ];

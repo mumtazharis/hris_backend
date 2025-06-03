@@ -60,4 +60,8 @@ class Employee extends Model
         return $this->belongsTo(Bank::class, 'bank_code', 'code');
     }
 
+    public function document(){
+        return $this->hasMany(Document::class, 'employee_id', 'employee_id');
+    }
+
 }

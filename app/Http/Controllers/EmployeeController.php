@@ -61,7 +61,10 @@ class EmployeeController extends Controller
             left join departments d on p.department_id = d.id
             left join check_clock_settings ccs on e.ck_setting_id = ccs.id
             join users u on e.user_id = u.id
-            where e.company_id = ?
+            where 
+            e.company_id = ?
+            and d.company_id = e.company_id
+
             order by e.id
         ", [$companyId]);
 
@@ -140,7 +143,6 @@ class EmployeeController extends Controller
                 'required_if:contract_type,Internship,Contract',
                 'nullable',
                 'date',
-                'after_or_equal:today',
                 function ($attribute, $value, $fail) use ($request) {
                     $type = $request->input('contract_type');
                     $value = $value === '' ? null : $value;
@@ -228,14 +230,14 @@ class EmployeeController extends Controller
 
         // Buat array employee tanpa relasi lengkap
         $employeeData = $employee->toArray();
-
+        
         // Hapus relasi position dan bank yang lengkap supaya tidak ikut dalam response
         unset($employeeData['position']);
         unset($employeeData['bank']);
 
         
         $employeePhotoUrl = null;
-        if (!empty($employee->employee_photo)) {
+        if (!empty($employee->employee_photo) && $employee->employee_photo !== '') {
             $employeePhotoUrl = Storage::disk('s3')->temporaryUrl(
                 $employee->employee_photo,
                 Carbon::now()->addMinutes(10) // berlaku 10 menit
@@ -330,7 +332,6 @@ class EmployeeController extends Controller
                 'required_if:contract_type,Internship,Contract',
                 'nullable',
                 'date',
-                'after_or_equal:today',
                 function ($attribute, $value, $fail) use ($request) {
                     $type = $request->input('contract_type');
                     $value = $value === '' ? null : $value;
@@ -345,7 +346,7 @@ class EmployeeController extends Controller
             ],
 
             'join_date' => 'sometimes|required|date',
-            'exit_date' => 'sometimes|required_if:contract_type,Internship,Contract|date',
+            'exit_date' => 'sometimes|nullable|date',
             'employee_status' => [
                 'sometimes',
                 'required',
@@ -358,6 +359,10 @@ class EmployeeController extends Controller
             ],
             'employee_photo' => 'sometimes|nullable|image|max:5120',
         ]);
+
+        if (isset($validatedData['contract_type']) && $validatedData['contract_type'] === 'Permanent') {
+            $validatedData['contract_end'] = null;
+        }
 
         DB::beginTransaction();
 
@@ -616,18 +621,19 @@ class EmployeeController extends Controller
 
                 'position_id' => 'required|exists:positions,id',
                 'birth_date' => 'required|date',
+                'contract_type' => 'required|in:Permanent,Internship,Contract',
+
                 'contract_end' => [
-                    'required_if:contract_type,Internship,Contract',
+                    'nullable', // diperlukan agar tidak error saat kosong
                     'date',
-                    'after_or_equal:today',
                     function ($attribute, $value, $fail) use ($request) {
                         $type = $request->input('contract_type');
 
-                        if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
+                        if (in_array($type, ['Internship', 'Contract']) && empty($value)) {
                             $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
                         }
 
-                        if ($type === 'Permanent' && !is_null($value)) {
+                        if ($type === 'Permanent' && !empty($value)) {
                             $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
                         }
                     },
@@ -639,18 +645,30 @@ class EmployeeController extends Controller
                 'gender' => 'required|in:Male,Female',
                 'blood_type' => 'required|in:A,B,AB,O,Unknown',
                 'marital_status' => 'required|in:Single,Married,Divorced,Widowed',
-                'contract_type' => 'required|in:Permanent,Internship,Contract',
+                
                 'bank_code' => 'nullable|exists:banks,code',
                 'employee_status' => 'required|in:Active,Retire,Resign,Fired'
             ]);
 
-            $position = Position::with('department')->find($data['position_id']);
+            // $position = Position::with('department')->find($data['position_id']);
+            // if ($position) {
+            //     $data['position_name'] = $position->name;
+            //     $data['department_name'] = $position->department->name ?? null;
+            // }
+            $companyId = $hrUser->company_id;
+
+            $position = Position::with('department')
+                ->where('id', $data['position_id'])
+                ->whereHas('department', function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId);
+                })
+                ->first();
             if ($position) {
                 $data['position_name'] = $position->name;
                 $data['department_name'] = $position->department->name ?? null;
             }
             if ($validator->fails()) {
-                // $data['errors'] = $validator->errors()->toArray();
+                $data['errors'] = $validator->errors()->toArray();
                 $invalidRows[] = $data;
             } else {
                 $validRows[] = $data;
@@ -713,29 +731,46 @@ class EmployeeController extends Controller
 
             'employees.*.position_id' => 'required|exists:positions,id',
             'employees.*.birth_date' => 'required|date',
-            'employees.*.contract_end' => [
-                'required_if:contract_type,Internship,Contract',
-                'date',
-                'after_or_equal:today',
-                function ($attribute, $value, $fail) use ($request) {
-                    $type = $request->input('contract_type');
+            // 'employees.*.contract_end' => [
+            //     'required_if:contract_type,Internship,Contract',
+            //     'date',
+            //     'after_or_equal:today',
+            //     function ($attribute, $value, $fail) use ($request) {
+            //         $type = $request->input('contract_type');
 
-                    if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
-                        $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
-                    }
+            //         if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
+            //             $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+            //         }
 
-                    if ($type === 'Permanent' && !is_null($value)) {
-                        $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
-                    }
-                },
-            ],
+            //         if ($type === 'Permanent' && !is_null($value)) {
+            //             $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+            //         }
+            //     },
+            // ],
+            'employees.*.contract_type' => 'required|in:Permanent,Internship,Contract',
+
+                'employees.*.contract_end' => [
+                    'nullable', // diperlukan agar tidak error saat kosong
+                    'date',
+                    function ($attribute, $value, $fail) use ($request) {
+                        $type = $request->input('contract_type');
+
+                        if (in_array($type, ['Internship', 'Contract']) && empty($value)) {
+                            $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                        }
+
+                        if ($type === 'Permanent' && !empty($value)) {
+                            $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                        }
+                    },
+                ],
             'employees.*.join_date' => 'required|date',
             'employees.*.exit_date' => 'nullable|date',
             'employees.*.education' => 'required|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
             'employees.*.gender' => 'required|in:Male,Female',
             'employees.*.blood_type' => 'required|in:A,B,AB,O,Unknown',
             'employees.*.marital_status' => 'required|in:Single,Married,Divorced,Widowed',
-            'employees.*.contract_type' => 'required|in:Permanent,Internship,Contract',
+            // 'employees.*.contract_type' => 'required|in:Permanent,Internship,Contract',
             'employees.*.bank_code' => 'nullable|exists:banks,code',
         ]);
 
