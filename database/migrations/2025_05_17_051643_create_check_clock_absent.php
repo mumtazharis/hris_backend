@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('absent_detail_cc', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ck_id')->constrained('check_clocks');
+            $table->foreignId('ck_id')->constrained('check_clocks')->onDelete('cascade');
             $table->date('start_date');
             $table->date('end_date');
             $table->string('evidence');

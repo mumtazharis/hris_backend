@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('letter_formats', function (Blueprint $table) {
+        Schema::create('document', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('content'); // berisi kode untuk peletakkan input pada template surat, tidak hanya peletakkan input tapi format dalam encoding tertentu
-            $table->integer('status'); // perlu ditanya lebih lanjut
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -26,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('letter_formats');
+        Schema::dropIfExists('document');
     }
 };

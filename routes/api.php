@@ -60,7 +60,8 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::get('employees/{id}', [EmployeeController::class, 'show']);
     Route::post('employees', [EmployeeController::class, 'store']);
     Route::patch('employees/{id}', [EmployeeController::class, 'update']);
-    Route::get('/employees/export-csv', [EmployeeController::class, 'exportCsv']);
+    Route::delete('employees/{id}', [EmployeeController::class, 'permanentDelete']);
+    Route::get('/employee/export-csv', [EmployeeController::class, 'exportCsv']);
     Route::post('/employees/preview-csv', [EmployeeController::class, 'previewCsv']);
     Route::post('/employees/confirm-import', [EmployeeController::class, 'confirmImport']);
     Route::post('/employees/import-csv', [EmployeeController::class, 'importCsv']);

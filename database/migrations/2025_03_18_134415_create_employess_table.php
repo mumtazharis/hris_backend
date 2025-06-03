@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -13,7 +14,8 @@ return new class extends Migration
     {
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->unique();
+            $table->foreignId('user_id')->constrained('users')->unique()->onDelete('cascade');
+            $table->string('company_id');
             $table->foreignId('ck_setting_id')->nullable()->constrained('check_clock_settings');
             $table->string('employee_id')->unique();
             $table->string('nik')->nullable();
@@ -23,8 +25,8 @@ return new class extends Migration
             // $table->foreignId('department_id')->nullable()->constrained('departments');
             // $table->string('department')->nullable();
             $table->string('address')->nullable();
-            $table->string('email')->unique()->nullable();
-            $table->string('phone')->unique()->nullable();
+            $table->string('email')->nullable();
+            $table->string('phone')->nullable();
             $table->string('birth_place')->nullable();
             $table->date('birth_date')->nullable();
             $table->enum('education', ['SD', 'SMP', 'SMA', 'D3', 'D4', 'S1', 'S2', 'S3'])->nullable();
@@ -34,16 +36,37 @@ return new class extends Migration
             $table->enum('gender', ['Male', 'Female'])->nullable();
             $table->enum('blood_type', ['A', 'B', 'AB', 'O', 'Unknown'])->nullable();
             $table->string('salary')->nullable();
-            $table->enum('contract_type', ['Permanent', 'Internship', 'Part-time', 'Outsource'])->default('Permanent')->nullable();
+            $table->enum('contract_type', ['Permanent', 'Internship', 'Contract'])->default('Permanent')->nullable();
             $table->string('bank_code')->nullable();
             $table->foreign('bank_code')->references('code')->on('banks');
             $table->string('account_number')->nullable();
-            $table->date('join_date')->nullable();
-            $table->date('resign_date')->nullable();
+
+            $table->date('contract_end')->nullable();
+            $table->date('join_date');
+            $table->date('exit_date')->nullable();
             $table->string('employee_photo')->nullable();
             $table->enum('employee_status', ['Active', 'Retire', 'Resign', 'Fired'])->default('Active')->nullable();
             $table->timestamps();
         });
+
+        DB::statement("
+            CREATE UNIQUE INDEX unique_nik_company_active
+            ON employees (company_id, nik)
+            WHERE employee_status = 'Active'
+        ");
+
+        DB::statement("
+            CREATE UNIQUE INDEX unique_email_company_active
+            ON employees (company_id, email)
+            WHERE employee_status = 'Active'
+        ");
+
+        DB::statement("
+            CREATE UNIQUE INDEX unique_phone_company_active
+            ON employees (company_id, phone)
+            WHERE employee_status = 'Active'
+        ");
+
     }
 
     /**
@@ -51,6 +74,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        DB::statement("DROP INDEX IF EXISTS unique_nik_active_only");
+        DB::statement("DROP INDEX IF EXISTS unique_email_active_only");
+        DB::statement("DROP INDEX IF EXISTS unique_phone_active_only");
         Schema::dropIfExists('employees');
     }
 };
