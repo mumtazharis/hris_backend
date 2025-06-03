@@ -50,9 +50,9 @@ class DashboardController extends Controller
     {
         return DB::select("
             select
-                count(*) filter (where cc.status_approval = 'approved') as \"Approved\",
-                count(*) filter (where cc.status_approval = 'waiting') as \"Waiting\",
-                count(*) filter (where cc.status_approval = 'rejected') as \"Rejected\"
+                count(*) filter (where cc.status_approval = 'Approved') as \"Approved\",
+                count(*) filter (where cc.status_approval = 'Pending') as \"Waiting\",
+                count(*) filter (where cc.status_approval = 'Rejected') as \"Rejected\"
             from check_clocks cc
             where cc.check_clock_date::date = CURRENT_DATE
         ");
@@ -61,9 +61,9 @@ class DashboardController extends Controller
     public function getAttendance(){
         return DB::select("
             select
-                count(*) filter (where cc.status = 'present') as \"On Time\",
-                count(*) filter (where cc.status = 'late') as \"Late\",
-                count(*) filter (where cc.status = 'absent') as \"Absent\"
+                count(*) filter (where cc.status = 'Present') as \"On Time\",
+                count(*) filter (where cc.status = 'Late') as \"Late\",
+                count(*) filter (where cc.status = 'Absent') as \"Absent\"
             from check_clocks cc
             where cc.check_clock_date::date = CURRENT_DATE
         ");
@@ -73,9 +73,9 @@ class DashboardController extends Controller
     {
         return DB::select("
             select
-                count(*) filter (where o.status_approval = 'approved') as \"Approved\",
-                count(*) filter (where o.status_approval = 'waiting') as \"Waiting\",
-                count(*) filter (where o.status_approval = 'rejected') as \"Rejected\"
+                count(*) filter (where o.status_approval = 'Approved') as \"Approved\",
+                count(*) filter (where o.status_approval = 'Waiting') as \"Waiting\",
+                count(*) filter (where o.status_approval = 'Rejected') as \"Rejected\"
             from overtime o
             where o.date::date = CURRENT_DATE
         ");
@@ -122,8 +122,8 @@ class DashboardController extends Controller
     public function getEmployeeGender(){
         return DB::select("
             select
-                count(*) filter (where e.gender = 'male') as \"Male\",
-                count(*) filter (where e.gender = 'female') as \"Female\"
+                count(*) filter (where e.gender = 'Male') as \"Male\",
+                count(*) filter (where e.gender = 'Female') as \"Female\"
             from employees e
             where e.employee_status = 'Active'
         ");
@@ -132,10 +132,10 @@ class DashboardController extends Controller
     public function getEmployeeMaritalStatus(){
         return DB::select("
             select
-                count(*) filter (where e.marital_status = 'single') as \"Single\",
-                count(*) filter (where e.marital_status = 'married') as \"Married\",
-                count(*) filter (where e.marital_status = 'divorced') as \"Divorced\",
-                count(*) filter (where e.marital_status = 'widowed') as \"Widowed\"
+                count(*) filter (where e.marital_status = 'Single') as \"Single\",
+                count(*) filter (where e.marital_status = 'Married') as \"Married\",
+                count(*) filter (where e.marital_status = 'Divorced') as \"Divorced\",
+                count(*) filter (where e.marital_status = 'Widowed') as \"Widowed\"
             from employees e
             where e.employee_status = 'Active'
         ");
