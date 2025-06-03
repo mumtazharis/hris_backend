@@ -47,7 +47,8 @@ class DocumentController extends Controller
             'document_type' => 'required|string|max:255',
             'issue_date' => 'required|date',
             'expiry_date' => 'required|date',
-            'document' => 'required|file|max:5120'
+            'document' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120'
+
         ]);
 
         DB::beginTransaction();
