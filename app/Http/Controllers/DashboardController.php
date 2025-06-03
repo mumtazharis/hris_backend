@@ -111,9 +111,9 @@ class DashboardController extends Controller
     public function getEmployeeWorkStatus(){
         return DB::select("
             select 
-                COUNT(*) filter (where e.work_status = 'Permanent') as \"Permanent\",
-                COUNT(*) filter (where e.work_status = 'Internship') as \"Internship\",
-                COUNT(*) filter (where e.work_status = 'Contract') as \"Contract\",
+                COUNT(*) filter (where e.contract_type = 'Permanent') as \"Permanent\",
+                COUNT(*) filter (where e.contract_type = 'Internship') as \"Internship\",
+                COUNT(*) filter (where e.contract_type = 'Contract') as \"Contract\"
             from employees e 
         ");
 
