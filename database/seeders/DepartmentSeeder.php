@@ -35,6 +35,27 @@ class DepartmentSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
             ],
+            [
+            'company_id' => 'COMP002',
+            'name' => 'Human Resources comp2',
+            'description' => 'Handles recruitment, employee relations, and payroll.',
+            'created_at' => now(),
+            'updated_at' => now(),
+            ],
+            [
+            'company_id' => 'COMP002',
+            'name' => 'Finance comp2',
+            'description' => 'Manages company finances, budgets, and audits.',
+            'created_at' => now(),
+            'updated_at' => now(),
+            ],
+            [
+            'company_id' => 'COMP002',
+            'name' => 'IT Department comp2',
+            'description' => 'Responsible for technology infrastructure and support.',
+            'created_at' => now(),
+            'updated_at' => now(),
+            ],
         ]);
     }
 }

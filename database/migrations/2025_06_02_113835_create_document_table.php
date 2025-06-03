@@ -11,8 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('document', function (Blueprint $table) {
+        Schema::create('documents', function (Blueprint $table) {
             $table->id();
+            $table->string('employee_id')->nullable();
+            // $table->foreign('bank_code')->references('code')->on('banks');
+            $table->foreign('employee_id')->references('employee_id')->on('employees')->onDelete('cascade');
+            $table->string("document_name");
+            $table->string("document_type");
+            $table->date("issue_date");
+            $table->date("expiry_date");
+            $table->string("document");
             $table->timestamps();
         });
     }
@@ -22,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('document');
+        Schema::dropIfExists('documents');
     }
 };

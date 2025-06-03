@@ -7,11 +7,13 @@ use App\Http\Controllers\CheckClockController;
 use App\Http\Controllers\CheckClockSettingController;
 use App\Http\Controllers\CheckClockSettingTimesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FormDataController;
 use App\Http\Controllers\MailTest;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\PaymentController;
+use App\Models\Document;
 
 Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -56,15 +58,18 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::get('department-position', [FormDataController::class, 'getDepartmentPosition']);
     Route::get('dashboard', [DashboardController::class, 'approvalStatus']);
 
-    Route::get('employees', [EmployeeController::class, 'index']);
-    Route::get('employees/{id}', [EmployeeController::class, 'show']);
-    Route::post('employees', [EmployeeController::class, 'store']);
-    Route::patch('employees/{id}', [EmployeeController::class, 'update']);
-    Route::delete('employees/{id}', [EmployeeController::class, 'permanentDelete']);
+    Route::get('/employees', [EmployeeController::class, 'index']);
+    Route::get('/employees/{id}', [EmployeeController::class, 'show']);
+    Route::post('/employees', [EmployeeController::class, 'store']);
+    Route::patch('/employees/{id}', [EmployeeController::class, 'update']);
+    Route::delete('/employees/{id}', [EmployeeController::class, 'permanentDelete']);
     Route::get('/employee/export-csv', [EmployeeController::class, 'exportCsv']);
     Route::post('/employees/preview-csv', [EmployeeController::class, 'previewCsv']);
     Route::post('/employees/confirm-import', [EmployeeController::class, 'confirmImport']);
     Route::post('/employees/import-csv', [EmployeeController::class, 'importCsv']);
     Route::post('/employees/{employee_id}/reset-password', [EmployeeController::class, 'resetPassword']);
+    Route::post('/documents' ,[DocumentController::class, 'store']);
+    Route::get('/documents/{employee_id}' ,[DocumentController::class, 'getEmployeeDocument']);
+    Route::get('/documents/download/{id}' ,[DocumentController::class, 'download']);
 
 });

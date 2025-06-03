@@ -42,7 +42,7 @@ return new class extends Migration
             $table->string('account_number')->nullable();
 
             $table->date('contract_end')->nullable();
-            $table->date('join_date');
+            $table->date('join_date')->nullable();
             $table->date('exit_date')->nullable();
             $table->string('employee_photo')->nullable();
             $table->enum('employee_status', ['Active', 'Retire', 'Resign', 'Fired'])->default('Active')->nullable();
@@ -74,9 +74,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("DROP INDEX IF EXISTS unique_nik_active_only");
-        DB::statement("DROP INDEX IF EXISTS unique_email_active_only");
-        DB::statement("DROP INDEX IF EXISTS unique_phone_active_only");
+        DB::statement("DROP INDEX IF EXISTS unique_nik_company_active");
+        DB::statement("DROP INDEX IF EXISTS unique_email_company_active");
+        DB::statement("DROP INDEX IF EXISTS unique_phone_company_active");
         Schema::dropIfExists('employees');
     }
 };
