@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CheckClock;
+use App\Models\CheckClockSetting;
 use App\Models\CheckClockSettingTimes;
 use Illuminate\Http\Request;
 
@@ -15,6 +17,7 @@ class CheckClockSettingTimesController extends Controller
         $times = CheckClockSettingTimes::select(
             'check_clock_setting_times.id as data_id',
             'check_clock_settings.name as worktype',
+            'check_clock_settings.id as worktype_id',
             'check_clock_setting_times.day',
             'check_clock_setting_times.clock_in',
             'check_clock_setting_times.clock_out',
@@ -85,6 +88,7 @@ class CheckClockSettingTimesController extends Controller
             ]);
 
             $record = CheckClockSettingTimes::findOrFail($checkClockSettingTimes);
+            $ccs_record = CheckClockSetting::findorFail($request->worktype_id);
         
             if (!$record) {
                 return response()->json(['errors' => ['message' => 'Record not found']], 404);
@@ -94,20 +98,23 @@ class CheckClockSettingTimesController extends Controller
             $record->clock_out = $validated['clockOut'];
 
             if (isset($validated['latitude'])) {
-                $record->latitude = $validated['latitude'];
+                $ccs_record->latitude = $validated['latitude'];
             }
             if (isset($validated['longitude'])) {
-                $record->longitude = $validated['longitude'];
+                $ccs_record->longitude = $validated['longitude'];
             }
             if (isset($validated['radius'])) {
-                $record->radius = $validated['radius'];
+                $ccs_record->radius = $validated['radius'];
             }
             if ($record->save()) {
-                return response()->json(['success' => ['message' => 'Successfully update the data']], 200);
+                if ($ccs_record->save()) {
+                    return response()->json(['success' => ['message' => 'Successfully update the data']], 200);
+                }
+                return response()->json(['errors' => ['message' => 'Failed to update the setting']], 400);
             } 
             return response()->json(['errors' => ['message' => 'Failed to update the data']], 400);
         } catch (\Exception $e) {
-            return response()->json(['errors' => ['message' => 'Failed to update the data: ' . $e->getMessage()]], 401);
+            return response()->json(['errors' => ['message' => 'Failed to update the data: ' . $e->getMessage()]], 400);
         }
         
 
