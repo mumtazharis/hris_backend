@@ -22,9 +22,9 @@ class CheckClockStSeeder extends Seeder
 
         CheckClockSetting::create([
             'name' => 'WFO',
-            'latitude' => -6.200000,
-            'longitude' => 106.816666,
-            'radius' => 500,
+            'latitude' => -7.944240526367352,
+            'longitude' => 112.61488447149941,
+            'radius' => 100,
         ]);
     }
 }

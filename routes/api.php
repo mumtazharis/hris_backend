@@ -42,9 +42,10 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
 
     // Resource routes
     Route::resource('check-clocks', CheckClockController::class);
-    Route::resource('check-clock-settings', CheckClockSettingController::class);
+    // Route::resource('check-clock-settings', CheckClockSettingController::class);
     Route::resource('check-clock-setting-times', CheckClockSettingTimesController::class);
 
+    Route::post('check-clock-rule', [CheckClockSettingController::class, 'update']);
     Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
 
     // Route::post('/verify-token', function () {
