@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('overtime', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees');
+            $table->string('employee_id');
+            $table->foreign('employee_id')->references('employee_id')->on('employees');
             $table->foreignId('overtime_setting_id')->constrained('overtime_settings');
             $table->date('date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->string('payroll');
+            $table->integer('total_hour');
+            $table->integer('payroll')->nullable();
+            $table->enum('status', ['Approved', 'Pending', 'Rejected'])->default('Pending');
             $table->timestamps();
             $table->softDeletes();
         });

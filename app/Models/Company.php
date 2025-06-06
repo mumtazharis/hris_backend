@@ -10,7 +10,10 @@ class Company extends Model
     protected $fillable = ['name', 'company_id','plan_id'];
 
     public function user(){
-        return $this->hasOne(User::class, 'company_id', 'company_id');
+        return $this->hasMany(User::class, 'company_id', 'company_id');
+    }
+    public function overtimeSetting(){
+        return $this->hasMany(User::class, 'company_id', 'company_id');
     }
 
     public function department(){
