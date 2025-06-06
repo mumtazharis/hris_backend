@@ -18,8 +18,11 @@ class CheckClockSettingTimes extends Model
     protected $fillable = [
         'ck_setting_id',
         'day',
+        'min_clock_in',
         'clock_in',
+        'max_clock_in',
         'clock_out',
+        'max_clock_out',
         'break_start',
         'break_end',
     ];
