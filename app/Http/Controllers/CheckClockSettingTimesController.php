@@ -6,6 +6,7 @@ use App\Models\CheckClock;
 use App\Models\CheckClockSetting;
 use App\Models\CheckClockSettingTimes;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CheckClockSettingTimesController extends Controller
 {
@@ -14,6 +15,8 @@ class CheckClockSettingTimesController extends Controller
      */
     public function index()
     {
+        $hrUser = Auth::user();
+        $companyId = $hrUser->company_id;
         $location = CheckClockSetting::select(
             'check_clock_settings.id as data_id',
             'check_clock_settings.latitude',
@@ -21,6 +24,7 @@ class CheckClockSettingTimesController extends Controller
             'check_clock_settings.radius'
         )
             ->where('check_clock_settings.name', '=', 'WFO')
+            ->where('check_clock_settings.company_id', $companyId)
             ->get();
 
         $times = CheckClockSettingTimes::select(
@@ -40,6 +44,7 @@ class CheckClockSettingTimesController extends Controller
         )
             ->join('check_clock_settings', 'check_clock_setting_times.ck_setting_id', '=', 'check_clock_settings.id')
             ->whereNull('check_clock_setting_times.deleted_at')
+            ->where('check_clock_settings.company_id', $companyId)
             ->orderBy('check_clock_setting_times.created_at', 'desc')
             ->distinct()
             ->get();
@@ -99,7 +104,13 @@ class CheckClockSettingTimesController extends Controller
             'maxClockOut' => 'nullable|date_format:H:i',
         ]);
 
-        $record = CheckClockSettingTimes::findOrFail($checkClockSettingTimes);
+        $hrUser = Auth::user();
+        $companyId = $hrUser->company_id;
+        $record = CheckClockSettingTimes::where('id',$checkClockSettingTimes)
+            ->whereHas('checkClockSetting', function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->firstOrFail();
 
         if (!$record) {
             return response()->json(['errors' => ['message' => 'Record not found']], 404);

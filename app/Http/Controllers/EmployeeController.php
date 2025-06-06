@@ -63,7 +63,6 @@ class EmployeeController extends Controller
             join users u on e.user_id = u.id
             where 
             e.company_id = ?
-            and d.company_id = e.company_id
 
             order by e.id
         ", [$companyId]);
