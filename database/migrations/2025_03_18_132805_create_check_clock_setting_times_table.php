@@ -15,8 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('ck_setting_id')->constrained('check_clock_settings');
             $table->string('day');
+            $table->time('min_clock_in')->nullable();
             $table->time('clock_in')->nullable();
+            $table->time('max_clock_in')->nullable();
             $table->time('clock_out')->nullable();
+            $table->time('max_clock_out')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

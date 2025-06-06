@@ -15,12 +15,13 @@ class CheckClockSettingTimesController extends Controller
     public function index()
     {
         $location = CheckClockSetting::select(
-        'check_clock_settings.id as data_id',
-        'check_clock_settings.latitude',
-        'check_clock_settings.longitude',
-        'check_clock_settings.radius')
-        ->where('check_clock_settings.name', '=', 'WFO')
-        ->get();
+            'check_clock_settings.id as data_id',
+            'check_clock_settings.latitude',
+            'check_clock_settings.longitude',
+            'check_clock_settings.radius'
+        )
+            ->where('check_clock_settings.name', '=', 'WFO')
+            ->get();
 
         $times = CheckClockSettingTimes::select(
             'check_clock_setting_times.id as data_id',
@@ -28,7 +29,10 @@ class CheckClockSettingTimesController extends Controller
             'check_clock_settings.id as worktype_id',
             'check_clock_setting_times.day',
             'check_clock_setting_times.clock_in',
+            'check_clock_setting_times.min_clock_in',
+            'check_clock_setting_times.max_clock_in',
             'check_clock_setting_times.clock_out',
+            'check_clock_setting_times.max_clock_out',
             'check_clock_settings.latitude',
             'check_clock_settings.longitude',
             'check_clock_settings.radius',
@@ -87,44 +91,34 @@ class CheckClockSettingTimesController extends Controller
     public function update(Request $request, string $checkClockSettingTimes)
     {
         // try {
-            $validated = $request->validate([
-                'clockIn' => 'nullable|date_format:H:i',
-                'clockOut' => 'nullable|date_format:H:i|after:clock_in',
-                'latitude' => 'nullable|numeric',
-                'longitude' => 'nullable|numeric',
-                'radius' => 'nullable|numeric',
-            ]);
+        $validated = $request->validate([
+            'minClockIn' => 'nullable|date_format:H:i',
+            'clockIn' => 'nullable|date_format:H:i',
+            'maxClockIn' => 'nullable|date_format:H:i',
+            'clockOut' => 'nullable|date_format:H:i',
+            'maxClockOut' => 'nullable|date_format:H:i',
+        ]);
 
-            $record = CheckClockSettingTimes::findOrFail($checkClockSettingTimes);
-            // $ccs_record = CheckClockSetting::findorFail($request->worktype_id);
+        $record = CheckClockSettingTimes::findOrFail($checkClockSettingTimes);
 
-            if (!$record) {
-                return response()->json(['errors' => ['message' => 'Record not found']], 404);
-            }
+        if (!$record) {
+            return response()->json(['errors' => ['message' => 'Record not found']], 404);
+        }
 
-            $record->clock_in = $validated['clockIn'];
+        $record->clock_in = $validated['clockIn'];
+        $record->max_clock_in = $validated['maxClockIn'];
+        $record->min_clock_in = $validated['minClockIn'];
+        if (isset($validated['clockOut'])) {
             $record->clock_out = $validated['clockOut'];
+        }
 
-            // if (isset($validated['latitude'])) {
-            //     $ccs_record->latitude = $validated['latitude'];
-            // }
-            // if (isset($validated['longitude'])) {
-            //     $ccs_record->longitude = $validated['longitude'];
-            // }
-            // if (isset($validated['radius'])) {
-            //     $ccs_record->radius = $validated['radius'];
-            // }
-            if ($record->save()) {
-                return response()->json(['success' => ['message' => 'Successfully update the setting times']], 200);
-            }
-            return response()->json(['errors' => ['message' => 'Failed to update the data']], 400);
-        // }
-        //     catch (\Exception $e) {
-        //         return response()->json(['errors' => ['message' => 'Something went wrong']], 500);
-        // }
-
-
-        // return response()->json(['errors' => ['message' => 'Failed to update the data']], 401);
+        if (isset($validated['maxClockOut'])) {
+            $record->max_clock_out = $validated['maxClockOut'];
+        }
+        if ($record->save()) {
+            return response()->json(['success' => ['message' => 'Successfully update the setting times']], 200);
+        }
+        return response()->json(['errors' => ['message' => 'Failed to update the data']], 400);
     }
 
     /**
