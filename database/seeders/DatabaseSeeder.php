@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\OvertimeSetting;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -25,7 +26,10 @@ class DatabaseSeeder extends Seeder
             DeletedEmployeeLogSeeder::class,
             PlansPriceSeeder::class,
             AbsentCCSeeder::class,
-            PresentCCSeeder::class
+            PresentCCSeeder::class,
+            OvertimeSettingSeeder::class,
+            OvertimeFormulaSeeder::class,
+            OvertimeSeeder::class,
         ]);
     }
 }

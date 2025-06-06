@@ -13,14 +13,17 @@ return new class extends Migration
     {
         Schema::create('overtime_settings', function (Blueprint $table) {
             $table->id();
+            $table->string('company_id')->nullable();
+            $table->foreign('company_id')->references('company_id')->on('companies');
             $table->string('name');
             // $table->string('formula_id')->constraint('overtime_formula');
             $table->string('type');
             $table->string('category');
-            $table->string('working_days');
-            $table->string('calculation');
-            $table->string('rate');
+            $table->string('working_days')->nullable();
+            // $table->string('calculation');
+            // $table->string('rate');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

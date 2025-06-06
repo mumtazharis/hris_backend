@@ -11,9 +11,12 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FormDataController;
 use App\Http\Controllers\MailTest;
+use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\OvertimeSettingController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\PaymentController;
 use App\Models\Document;
+use App\Models\OvertimeSetting;
 
 Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -72,4 +75,14 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::get('/documents/{employee_id}' ,[DocumentController::class, 'getEmployeeDocument']);
     Route::get('/documents/download/{id}' ,[DocumentController::class, 'download']);
 
+
+    Route::get("/overtime_settings", [OvertimeSettingController::class, 'index']);
+    Route::post("/overtime_settings", [OvertimeSettingController::class, 'store']);
+    Route::put("/overtime_settings/{id}", [OvertimeSettingController::class, 'update']);
+    Route::delete("/overtime_settings/{id}", [OvertimeSettingController::class, 'delete']);
+
+    Route::get("/overtime", [OvertimeController::class, 'index']);
+    Route::post("/overtime", [OvertimeController::class, 'create']);
+    Route::patch("/overtime/{id}", [OvertimeController::class, 'approval']);
+    Route::delete("/overtime/{id}", [OvertimeController::class, 'delete']);
 });
