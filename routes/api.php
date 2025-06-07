@@ -29,7 +29,7 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('reset-process', [ResetPasswordController::class, 'resetPassword'])->name('reset_password_process');
     Route::post('token-checker', [ResetPasswordController::class, 'checkToken'])->name('check_token');
 
-    Route::get('dashboardnologin', [DashboardController::class, 'dashboard']);
+    // Route::get('dashboardnologin', [DashboardController::class, 'dashboard']);
     // Route::post('payment', [PaymentController::class, 'createXenditInvoice'])->name('payment');
     Route::post('payment', [PaymentController::class, 'createInvoice'])->name('payment');
     Route::post('order_summary', [PaymentController::class, 'getOrderSummary'])->name('order_summary');
@@ -59,7 +59,7 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     // ], 200);
     Route::get('bank', [FormDataController::class, 'getBank']);
     Route::get('department-position', [FormDataController::class, 'getDepartmentPosition']);
-    Route::get('dashboard', [DashboardController::class, 'approvalStatus']);
+    Route::get('dashboard', [DashboardController::class, 'dashboard']);
 
     Route::get('/employees', [EmployeeController::class, 'index']);
     Route::get('/employees/{id}', [EmployeeController::class, 'show']);
