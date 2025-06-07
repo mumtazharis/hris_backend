@@ -26,11 +26,12 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('reset-process', [ResetPasswordController::class, 'resetPassword'])->name('reset_password_process');
     Route::post('token-checker', [ResetPasswordController::class, 'checkToken'])->name('check_token');
 
+
     Route::get('dashboardnologin', [DashboardController::class, 'dashboard']);
     // Route::post('payment', [PaymentController::class, 'createXenditInvoice'])->name('payment');
-    Route::post('payment', [PaymentController::class, 'createInvoice'])->name('payment');
     Route::post('order_summary', [PaymentController::class, 'getOrderSummary'])->name('order_summary');
     Route::post('/xendit/webhook', [PaymentController::class, 'handle']);
+    // Route::get('/payment', [DocumentController::class, 'payment']);
     // Route::get('/employees/export-csv', [EmployeeController::class, 'exportCsv'])->name('employees.exportCsv');
 });
 
@@ -41,14 +42,16 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::get('/users/{id}', [UserController::class, 'show']);
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
-
+    
     // Resource routes
     Route::resource('check-clocks', CheckClockController::class);
     Route::resource('check-clock-settings', CheckClockSettingController::class);
     Route::resource('check-clock-setting-times', CheckClockSettingTimesController::class);
-
+    
     Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
-
+    //payment
+    Route::get('/payment-history', [PaymentController::class, 'index']);
+    Route::get('payment', [PaymentController::class, 'createInvoice'])->name('payment');
     // Route::post('/verify-token', function () {
     // return response()->json([
     //     // 'user' => $request->user(),

@@ -25,7 +25,8 @@ class DatabaseSeeder extends Seeder
             DeletedEmployeeLogSeeder::class,
             PlansPriceSeeder::class,
             AbsentCCSeeder::class,
-            PresentCCSeeder::class
+            PresentCCSeeder::class,
+            BillsSeeder::class,
         ]);
     }
 }
