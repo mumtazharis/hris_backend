@@ -21,7 +21,8 @@ return new class extends Migration
             // $table->date('period'); // periode pembayaran per bulan/tahun (di db tetep kesimpen format yyyy:MM:dd)
             $table->string('period', 7); // Format: mm-yyyy
             $table->date('deadline');
-            $table->enum('status', ['pending', 'paid', 'overdue', 'failed'])->default('pending');
+            $table->enum('status', ['pending', 'paid', 'overdue'])->default('pending');
+            $table->dateTime('pay_at')->nullable(); // waktu pembayaran
             $table->timestamps();
             $table->softDeletes();
         });
