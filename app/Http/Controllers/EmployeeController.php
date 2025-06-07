@@ -63,7 +63,6 @@ class EmployeeController extends Controller
             join users u on e.user_id = u.id
             where 
             e.company_id = ?
-            and d.company_id = e.company_id
 
             order by e.id
         ", [$companyId]);
@@ -126,7 +125,7 @@ class EmployeeController extends Controller
             ],
 
             'gender' => 'required|in:Male,Female',
-            'education' => 'required|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
+            'education' => 'required|in:SD,SMP,SMA,D1,D2,D3,D4,S1,S2,S3,Other',
             'birth_place' => 'required|string|max:100',
             'birth_date' => 'required|date',
             'blood_type' => 'required|in:A,B,AB,O,Unknown',
@@ -290,7 +289,7 @@ class EmployeeController extends Controller
                 }),
             ],
             'gender' => 'sometimes|required|in:Male,Female',
-            'education' => 'sometimes|required|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
+            'education' => 'sometimes|required|in:SD,SMP,SMA,D1,D2,D3,D4,S1,S2,S3,Other',
             'birth_place' => 'sometimes|required|string|max:100',
             'birth_date' => 'sometimes|required|date',
             'citizenship' => 'sometimes|required|string|max:100',
@@ -315,6 +314,7 @@ class EmployeeController extends Controller
                 'sometimes',
                 'required',
                 'string',
+                'min:10',
                 'max:17',
                 Rule::unique('employees')->ignore($employee_id, 'employee_id')->where(function ($query) use ($hrUser) {
                     return $query->where('employee_status', 'Active')
@@ -452,7 +452,9 @@ class EmployeeController extends Controller
     public function exportCsv(Request $request)
     {
         $hrUser = Auth::user();
-  
+        if (!$hrUser) {
+            return response()->json(['message' => 'HR user not authenticated or company_id not found.'], 403);
+        }
         $fileName = 'employee.csv';
         $query = Employee::query()->where('company_id', $hrUser->company_id);
 
@@ -480,6 +482,9 @@ class EmployeeController extends Controller
 
 
         $employees = $query->get();
+        if ($employees->isEmpty()) {
+            return response()->json(['message' => 'No employees found matching the criteria.'], 404);
+        }
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
@@ -641,7 +646,7 @@ class EmployeeController extends Controller
 
                 'join_date' => 'required|date',
                 'exit_date' => 'nullable|date',
-                'education' => 'required|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
+                'education' => 'required|in:SD,SMP,SMA,D1,D2,D3,D4,S1,S2,S3,Other',
                 'gender' => 'required|in:Male,Female',
                 'blood_type' => 'required|in:A,B,AB,O,Unknown',
                 'marital_status' => 'required|in:Single,Married,Divorced,Widowed',
@@ -766,7 +771,7 @@ class EmployeeController extends Controller
                 ],
             'employees.*.join_date' => 'required|date',
             'employees.*.exit_date' => 'nullable|date',
-            'employees.*.education' => 'required|in:SD,SMP,SMA,D3,D4,S1,S2,S3',
+            'employees.*.education' => 'required|in:SD,SMP,SMA,D1,D2,D3,D4,S1,S2,S3,Other',
             'employees.*.gender' => 'required|in:Male,Female',
             'employees.*.blood_type' => 'required|in:A,B,AB,O,Unknown',
             'employees.*.marital_status' => 'required|in:Single,Married,Divorced,Widowed',
