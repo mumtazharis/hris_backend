@@ -21,10 +21,11 @@ class CheckClockStTimesSeeder extends Seeder
                 CheckClockSettingTimes::create([
                     'ck_setting_id' => $index + 1, // Assuming ck_setting_id starts from 1
                     'day' => $day,
+                    'min_clock_in' => '07:30:00',
                     'clock_in' => '08:00:00',
-                    'clock_out' => '17:00:00',
-                    'break_start' => '12:00:00',
-                    'break_end' => '13:00:00',
+                    'max_clock_in' => '10:00:00',
+                    'clock_out' =>  $ckSetting === 'WFA' ? null : '17:00:00',
+                    'max_clock_out' =>  $ckSetting === 'WFA' ? null : '21:00:00',
                 ]);
             }
         }

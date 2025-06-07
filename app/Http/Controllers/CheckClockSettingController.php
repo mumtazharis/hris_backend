@@ -44,18 +44,44 @@ class CheckClockSettingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CheckClockSetting $checkClockSetting)
+    public function update(Request $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'latitude' => 'nullable|string',
-            'longitude' => 'nullable|string',
-            'radius' => 'nullable|string',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'data_id' => 'required|integer|exists:check_clock_settings,id',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'radius' => 'nullable|numeric',
+            ]);
 
-        $checkClockSetting->update($validatedData);
+            $record = CheckClockSetting::findOrFail($validatedData['data_id']);
+            
+            $record->fill([
+                'latitude' => $validatedData['latitude'] ?? $record->latitude,
+                'longitude' => $validatedData['longitude'] ?? $record->longitude,
+                'radius' => $validatedData['radius'] ?? $record->radius,
+            ]);
 
-        return response()->json($checkClockSetting);
+            if ($record->save()) {
+                return response()->json([
+                    'success' => ['message' => 'Successfully update the location'],
+                    'data' => $record
+                ], 200);
+            }
+
+            return response()->json([
+                'errors' => ['message' => 'Failed to update the data']
+            ], 422);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'errors' => ['message' => 'Record not found']
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'errors' => ['message' => 'Failed to update the data: ' . $e->getMessage()]
+            ], 500);
+        }
     }
 
     /**

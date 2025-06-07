@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('company_id');
+            $table->string('company_id')->nullable();
             $table->foreign('company_id')->references('company_id')->on('companies');
             $table->string('full_name')->nullable();
             $table->string('email')->unique()->nullable();
