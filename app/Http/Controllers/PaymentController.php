@@ -108,7 +108,7 @@ class PaymentController extends Controller
         $bill = DB::table('bills')
             ->where('user_id', $loggedInUserId)
             ->where('period', $currentPeriod)
-            ->where('status', 'pending')
+            ->whereIn('status',  ['pending', 'overdue'])
             ->latest('created_at')
             ->first();
 
@@ -124,7 +124,7 @@ class PaymentController extends Controller
         $res = Http::withHeaders($headers)->post('https://api.xendit.co/v2/invoices', [
             'external_id' => $bill->payment_id,
             'total_employee' => $bill->total_employee,
-            'amount' => $bill->amount,
+            'amount' => $bill->amount + ($bill->fine ?? 0), // jumlah amount + fine
             'invoice_duration' => $invoiceDuration,
         ]);
 

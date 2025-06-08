@@ -5,6 +5,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Console\Commands\GenerateMonthlyBills;
+use App\Console\Commands\updateOverdueAdminPayments;
 
 Artisan::command('inspire', function () {
     /** @var ClosureCommand $this */
@@ -15,3 +16,4 @@ Artisan::command('inspire', function () {
 //     ->monthlyOn(28, '00:00');
 
 Schedule::command(GenerateMonthlyBills::class)->everyMinute();
+Schedule::command(UpdateOverdueAdminPayments::class)->everyMinute();
