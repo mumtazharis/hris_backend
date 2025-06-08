@@ -13,33 +13,20 @@ return new class extends Migration
     {
         Schema::create('bills', function (Blueprint $table) {
             $table->id();
-            // $table->bigInteger('payment_id')->unique()->nullable(false); // id unik tiap pembayaran
             $table->string('payment_id')->unique()->nullable(false); 
             $table->foreignId('user_id')->constrained('users');
-            $table->integer('total_employee'); // jumlah employee jadi tagihan (termasuk employee yang dihapus) bulan ini
-            $table->decimal('amount', 12, 0); // jumlah harga yang dibayarkan (disini di set max 12 digit)
-            // $table->date('period'); // periode pembayaran per bulan/tahun (di db tetep kesimpen format yyyy:MM:dd)
+            $table->integer('total_employee'); // jumlah employee jadi tagihan (termasuk yang dihapus) bulan ini
+            $table->foreignId('plan_id')->constrained('billing_plans'); // id plan yang digunakan
+            $table->string('plan_name'); // ← tambah kolom untuk menyimpan nama plan
+            $table->decimal('amount', 12, 0); // jumlah harga yang dibayarkan
             $table->string('period', 7); // Format: mm-yyyy
             $table->date('deadline');
             $table->enum('status', ['pending', 'paid', 'overdue'])->default('pending');
             $table->dateTime('pay_at')->nullable(); // waktu pembayaran
+            $table->decimal('fine', 12, 0)->nullable()->default(0); // denda
             $table->timestamps();
             $table->softDeletes();
         });
-
-
-        // schema::create('bills', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->string('external_id'); 
-        //     $table->string('checkout_link');
-        //     $table->string('no_transaction');
-        //     $table->string('item_name');
-        //     $table->integer('price');
-        //     $table->bigInteger('grand_total');
-        //     $table->string('status')->default('pending');
-        //     $table->timestamps();
-        //     $table->softDeletes();
-        // });
     }
 
     /**

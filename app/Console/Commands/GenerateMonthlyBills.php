@@ -41,33 +41,33 @@ class GenerateMonthlyBills extends Command
         $billingDay = 28; // Tanggal pembuatan tagihan
         $deadlineOffsetDays = 5; // Deadline 5 hari setelah tanggal pembuatan tagihan
         $billingDate = Carbon::now()->day($billingDay);
-                // Jika tanggal saat ini sudah lewat tanggal 28, maka tanggal tagihan adalah tanggal 28 bulan berikutnya
-                if (Carbon::now()->day > $billingDay) {
-                    $billingDate->addMonth();
-                }
-                $billingDate->day($billingDay); // Pastikan tanggalnya tetap 28 setelah addMonth jika diperlukan
+        // Jika tanggal saat ini sudah lewat tanggal 28, maka tanggal tagihan adalah tanggal 28 bulan berikutnya
+        if (Carbon::now()->day > $billingDay) {
+            $billingDate->addMonth();
+        }
+        $billingDate->day($billingDay); // Pastikan tanggalnya tetap 28 setelah addMonth jika diperlukan
 
-                // Deadline untuk tabel bills: 5 hari setelah tanggal pembuatan tagihan
-                $deadlineDate = $billingDate->copy()->addDays($deadlineOffsetDays)->format('Y-m-d');
+        // Deadline untuk tabel bills: 5 hari setelah tanggal pembuatan tagihan
+        $deadlineDate = $billingDate->copy()->addDays($deadlineOffsetDays)->format('Y-m-d');
 
-        
-        
+
+
         // Logic untuk mengambil semua user dengan role 'admin'
         // Asumsi ada kolom 'role' di tabel users
         $users = User::where('role', 'admin')->get();
-        
+
         foreach ($users as $user) {
             // Dapatkan informasi plan dan total employee untuk user ini
             $plan = DB::table('users')
-            ->join('companies', 'users.company_id', '=', 'companies.id')
-            ->join('billing_plans', 'companies.plan_id', '=', 'billing_plans.id')
-            ->where('users.id', $user->id)
-            ->select('billing_plans.plan_name as plan_name', 'billing_plans.id as plan_id')
-            ->first();
-            
+                ->join('companies', 'users.company_id', '=', 'companies.company_id')
+                ->join('billing_plans', 'companies.plan_id', '=', 'billing_plans.id')
+                ->where('users.id', $user->id)
+                ->select('billing_plans.plan_name as plan_name', 'billing_plans.id as plan_id')
+                ->first();
+
             if ($plan) {
                 $companyIdOfUser = $user->company_id;
-                
+
                 // Hitung total karyawan untuk perusahaan user ini
                 $totalEmployeeQuerySql = "
                 SELECT (
@@ -86,8 +86,8 @@ class GenerateMonthlyBills extends Command
                         WHERE user_id IN (
                             SELECT id FROM users WHERE company_id = ?
                         )
-                        AND TO_CHAR(resign_date, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
-                        AND employee_status IN ('Resign', 'Retire')
+                        AND TO_CHAR(exit_date, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
+                        AND employee_status IN ('exit', 'Retire')
                     ), 0)
                     +
                     COALESCE((
@@ -96,17 +96,17 @@ class GenerateMonthlyBills extends Command
                         WHERE user_id IN (
                             SELECT id FROM users WHERE company_id = ?
                         )
-                        AND employee_status IN ('Resign', 'Retire')
-                        AND resign_date >= date_trunc('month', CURRENT_DATE - interval '1 month') + interval '28 day'
-                        AND resign_date < date_trunc('month', CURRENT_DATE)
-                        AND EXTRACT(DAY FROM resign_date) IN (29, 30, 31)
+                        AND employee_status IN ('exit', 'Retire')
+                        AND exit_date >= date_trunc('month', CURRENT_DATE - interval '1 month') + interval '28 day'
+                        AND exit_date < date_trunc('month', CURRENT_DATE)
+                        AND EXTRACT(DAY FROM exit_date) IN (29, 30, 31)
                     ), 0)
-                ) AS total_employees_including_this_month_resigned;";
+                ) AS total_employees_including_this_month_exited;";
                 $totalEmployeeResult = DB::selectOne($totalEmployeeQuerySql, [$companyIdOfUser, $companyIdOfUser, $companyIdOfUser]);
-                $numberOfEmployees = $totalEmployeeResult->total_employees_including_this_month_resigned ?? 0;
+                $numberOfEmployees = $totalEmployeeResult->total_employees_including_this_month_exited ?? 0;
 
-                
-               $payment_id = 'hris-' . $user->id . '-' . $period;
+
+                $payment_id = 'hris-' . $user->id . '-' . $period;
                 // Dapatkan harga per user berdasarkan jumlah karyawan
                 $pricePerUserQuerySql = "
                     SELECT
@@ -128,9 +128,11 @@ class GenerateMonthlyBills extends Command
                 DB::table('bills')->insert([
                     'payment_id' => $payment_id,
                     'user_id' => $user->id,
+                    'plan_id' => $plan->plan_id,
+                    'plan_name' => $plan->plan_name, // ← Sekarang sudah valid!
                     'total_employee' => $numberOfEmployees,
                     'amount' => $amount,
-                    'period' => $period, // Format: 05-2022
+                    'period' => $period,
                     'deadline' => $deadlineDate,
                     'status' => 'pending',
                     'created_at' => Carbon::now(),
@@ -140,12 +142,12 @@ class GenerateMonthlyBills extends Command
         }
 
         $this->info('Monthly bills generated successfully!');
-        
+
         Log::info('Bills generated at ' . now());
         Log::info('Jumlah user ditemukan: ' . $users->count());
         Log::info("Bill berhasil dibuat untuk user: " . $user->id);
 
-        
+
         return 0;
     }
 }
