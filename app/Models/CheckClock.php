@@ -12,7 +12,8 @@ class CheckClock extends Model
 
     protected $fillable = [
         'employee_id',
-        'approver_id',
+        'submitter_id',
+        'ck_setting_id',
         'check_clock_date',
         'status',
         'status_approval',
@@ -25,7 +26,15 @@ class CheckClock extends Model
     {
         return $this->belongsTo(Employee::class);
     }
-    public function approver()
+    public function checkClockSetting()
+    {
+        return $this->belongsTo(CheckClockSetting::class, 'ck_setting_id');
+    }
+    public function presentDetailCC()
+    {
+        return $this->hasMany(PresentDetail::class, 'ck_id');
+    }
+    public function submitter()
     {
         return $this->belongsTo(User::class);
     }

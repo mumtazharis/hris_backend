@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('check_clocks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->foreignId('approver_id')->constrained('users')->onDelete('cascade');
-            $table->dateTime('check_clock_date');
+            $table->foreignId('submitter_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('ck_setting_id')->nullable()->constrained('check_clock_settings');
+            $table->date('check_clock_date');
             $table->enum('status', ['Present', 'Sick Leave', 'Annual Leave'])->default('Present');
             $table->enum('status_approval', ['Approved', 'Pending', 'Rejected'])->default('Pending');
             $table->text('reject_reason')->nullable();

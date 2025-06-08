@@ -16,7 +16,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->unique()->onDelete('cascade');
             $table->string('company_id');
-            $table->foreignId('ck_setting_id')->nullable()->constrained('check_clock_settings');
             $table->string('employee_id')->unique();
             $table->string('nik')->nullable();
             $table->string('first_name');
