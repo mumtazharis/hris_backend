@@ -157,7 +157,7 @@ class DashboardController extends Controller
         return DB::select("
             select
                 count(*) filter (where e.religion = 'Islam') as \"Islam\",
-                count(*) filter (where e.religion = 'Hinduism') as \"Hinduism\",
+                count(*) filter (where e.religion = 'Hindu') as \"Hindu\",
                 count(*) filter (where e.religion = 'Buddhism') as \"Buddhism\",
                 count(*) filter (where e.religion = 'Christian') as \"Christian\",
                 count(*) filter (where e.religion = 'Confucianism') as \"Confucianism\",

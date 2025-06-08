@@ -146,11 +146,11 @@ class EmployeeController extends Controller
                     $type = $request->input('contract_type');
                     $value = $value === '' ? null : $value;
                     if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
-                        $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                        $fail('Contract end date is required if the contract type is Internship or Contract.');
                     }
 
                     if ($type === 'Permanent' && !is_null($value)) {
-                        $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                        $fail('Contract end date must be empty if the contract type is Permanent.');
                     }
                 },
             ],
@@ -336,29 +336,36 @@ class EmployeeController extends Controller
                     $type = $request->input('contract_type');
                     $value = $value === '' ? null : $value;
                     if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
-                        $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                        $fail('Contract end date is required if the contract type is Internship or Contract.');
                     }
 
                     if ($type === 'Permanent' && !is_null($value)) {
-                        $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                        $fail('Contract end date must be empty if the contract type is Permanent.');
                     }
                 },
             ],
 
             'join_date' => 'sometimes|required|date',
-            'exit_date' => 'sometimes|nullable|date',
+            // 'exit_date' => 'sometimes|nullable|date',
+            'exit_date' => [
+                'nullable',
+                'date',
+                Rule::prohibitedIf(fn () => $employee->employee_status === 'Active'),
+            ],
             'employee_status' => [
                 'sometimes',
                 'required',
                 'string',
                 function ($attribute, $value, $fail) use ($employee) {
                     if ($value === 'Active' && $employee->employee_status !== 'Active') {
-                        $fail('Status tidak bisa diubah menjadi Active karena sebelumnya sudah bukan Active. Silakan lakukan rejoin.');
+                        $fail('Status cannot be changed to Active because it was previously set to a non-active state. Please perform a rejoin instead.');
                     }
                 },
             ],
             'employee_photo' => 'sometimes|nullable|image|max:5120',
-        ]);
+        ],[
+                'exit_date.prohibited' => 'The exit date field must be empty when the status is Active.',
+            ],);
 
         if (isset($validatedData['contract_type']) && $validatedData['contract_type'] === 'Permanent') {
             $validatedData['contract_end'] = null;
@@ -635,11 +642,11 @@ class EmployeeController extends Controller
                         $type = $request->input('contract_type');
 
                         if (in_array($type, ['Internship', 'Contract']) && empty($value)) {
-                            $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                            $fail('Contract end date is required if the contract type is Internship or Contract.');
                         }
 
                         if ($type === 'Permanent' && !empty($value)) {
-                            $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                            $fail('Contract end date must be empty if the contract type is Permanent.');
                         }
                     },
                 ],
@@ -744,11 +751,11 @@ class EmployeeController extends Controller
             //         $type = $request->input('contract_type');
 
             //         if (in_array($type, ['Internship', 'Contract']) && is_null($value)) {
-            //             $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+            //             $fail('Contract end date is required if the contract type is Internship or Contract.');
             //         }
 
             //         if ($type === 'Permanent' && !is_null($value)) {
-            //             $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+            //             $fail('Contract end date must be empty if the contract type is Permanent.');
             //         }
             //     },
             // ],
@@ -761,11 +768,11 @@ class EmployeeController extends Controller
                         $type = $request->input('contract_type');
 
                         if (in_array($type, ['Internship', 'Contract']) && empty($value)) {
-                            $fail('Tanggal akhir kontrak wajib diisi jika tipe kontrak Internship atau Contract.');
+                            $fail('Contract end date is required if the contract type is Internship or Contract.');
                         }
 
                         if ($type === 'Permanent' && !empty($value)) {
-                            $fail('Tanggal akhir kontrak harus dikosongkan jika tipe kontrak adalah Permanent.');
+                            $fail('Contract end date must be empty if the contract type is Permanent.');
                         }
                     },
                 ],
@@ -847,10 +854,10 @@ class EmployeeController extends Controller
 
             DB::commit();
 
-            return response()->json(['message' => 'Import berhasil!'], 201);
+            return response()->json(['message' => 'Import successfully!'], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Gagal menyimpan data.', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to save data.', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -869,7 +876,7 @@ class EmployeeController extends Controller
 
         // Opsional: bisa return response atau redirect dengan pesan sukses
         return response()->json([
-            'message' => 'Password berhasil direset ke default.',
+            'message' => 'Password has been successfully reset to the default.',
             'default_password' => $employee->employee_id, // jangan dikirim di production
         ]);
     }
