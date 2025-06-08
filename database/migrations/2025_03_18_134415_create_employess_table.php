@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('birth_place')->nullable();
             $table->date('birth_date')->nullable();
-            $table->enum('education', ['SD', 'SMP', 'SMA', 'D3', 'D4', 'S1', 'S2', 'S3'])->nullable();
+            $table->enum('education', ['SD', 'SMP', 'SMA', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3', 'Other'])->nullable();
             $table->string('religion')->nullable();
             $table->enum('marital_status', ['Single', 'Married', 'Divorced', 'Widowed'])->nullable();
             $table->string('citizenship')->nullable();

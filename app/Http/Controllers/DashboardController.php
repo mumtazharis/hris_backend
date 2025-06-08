@@ -7,6 +7,7 @@ use App\Models\Employee;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -41,9 +42,10 @@ class DashboardController extends Controller
                 COUNT(*) FILTER (
                     WHERE employee_status = 'Resigned'
                 ) AS \"Resigned Employee\"
-            FROM employees;
+            FROM employees
+            WHERE employees.company_id = ?
 
-        ");
+        ", [Auth::user()->company_id]);
 
     }
     public function getApprovalStatus()
@@ -54,8 +56,10 @@ class DashboardController extends Controller
                 count(*) filter (where cc.status_approval = 'Pending') as \"Waiting\",
                 count(*) filter (where cc.status_approval = 'Rejected') as \"Rejected\"
             from check_clocks cc
+            join employees e on e.id = cc.employee_id
             where cc.check_clock_date::date = CURRENT_DATE
-        ");
+            AND e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getAttendance(){
@@ -65,8 +69,10 @@ class DashboardController extends Controller
                 count(*) filter (where cc.status = 'Late') as \"Late\",
                 count(*) filter (where cc.status = 'Absent') as \"Absent\"
             from check_clocks cc
+            join employees e on e.id = cc.employee_id
             where cc.check_clock_date::date = CURRENT_DATE
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getOvertimeStatus()
@@ -77,8 +83,10 @@ class DashboardController extends Controller
                 count(*) filter (where o.status_approval = 'Waiting') as \"Waiting\",
                 count(*) filter (where o.status_approval = 'Rejected') as \"Rejected\"
             from overtime o
+            join employees e on e.id = o.employee_id
             where o.date::date = CURRENT_DATE
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getEMployeeAge(){
@@ -90,9 +98,9 @@ class DashboardController extends Controller
                 COUNT(*) FILTER (WHERE usia >= 51) AS \"51++\"
             FROM (
                 SELECT DATE_PART('year', AGE(CURRENT_DATE, birth_date)) AS usia
-                FROM employees
+                FROM employees where employees.company_id = ?
             ) AS sub
-        ");
+        ", [Auth::user()->company_id]);
     }
 
     public function getLateEmployee(){
@@ -105,7 +113,8 @@ class DashboardController extends Controller
             join employees e on cc.employee_id = e.id
             join positions p on e.position_id = p.id
             where cc.status = 'present'
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getEmployeeWorkStatus(){
@@ -115,7 +124,8 @@ class DashboardController extends Controller
                 COUNT(*) filter (where e.contract_type = 'Internship') as \"Internship\",
                 COUNT(*) filter (where e.contract_type = 'Contract') as \"Contract\"
             from employees e 
-        ");
+            where e.company_id = ?
+        ", [Auth::user()->company_id]);
 
     }
 
@@ -126,7 +136,8 @@ class DashboardController extends Controller
                 count(*) filter (where e.gender = 'Female') as \"Female\"
             from employees e
             where e.employee_status = 'Active'
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getEmployeeMaritalStatus(){
@@ -138,21 +149,23 @@ class DashboardController extends Controller
                 count(*) filter (where e.marital_status = 'Widowed') as \"Widowed\"
             from employees e
             where e.employee_status = 'Active'
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getEmployeeReligion(){
         return DB::select("
             select
                 count(*) filter (where e.religion = 'Islam') as \"Islam\",
-                count(*) filter (where e.religion = 'Hinduism') as \"Hinduism\",
+                count(*) filter (where e.religion = 'Hindu') as \"Hindu\",
                 count(*) filter (where e.religion = 'Buddhism') as \"Buddhism\",
-                count(*) filter (where e.religion = 'Christianity') as \"Christianity\",
+                count(*) filter (where e.religion = 'Christian') as \"Christian\",
                 count(*) filter (where e.religion = 'Confucianism') as \"Confucianism\",
                 count(*) filter (where e.religion = 'Other') as \"Other\"
             from employees e
             where e.employee_status = 'Active'
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getEmployeeWorkYear(){
@@ -163,8 +176,8 @@ class DashboardController extends Controller
                 COUNT(*) FILTER (WHERE year >= 6) AS \"6++\"
             FROM (
                 SELECT DATE_PART('year', AGE(CURRENT_DATE, join_date)) AS year
-                FROM employees
+                FROM employees where employees.company_id = ?
             ) AS sub
-        ");
+        ", [Auth::user()->company_id]);
     }
 }

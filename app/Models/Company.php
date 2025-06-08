@@ -19,8 +19,8 @@ class Company extends Model
     public function department(){
         return $this->hasMany(Department::class, 'company_id', 'company_id');
     }
-    public function billing_plans()
+    public function billingPlan()
     {
-        return $this->belongsTo(BillingPlan::class);
+        return $this->belongsTo(BillingPlan::class, 'plan_id', 'id');
     }
 }
