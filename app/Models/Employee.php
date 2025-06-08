@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Testing\Fluent\Concerns\Has;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
 {
     // use HasFactory;
+    use SoftDeletes;
     
     protected $table = 'employees';
     protected $fillable = [
@@ -64,4 +65,8 @@ class Employee extends Model
         return $this->hasMany(Document::class, 'employee_id', 'employee_id');
     }
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
+    }
 }

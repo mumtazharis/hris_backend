@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CheckClockController;
 use App\Http\Controllers\CheckClockSettingController;
 use App\Http\Controllers\CheckClockSettingTimesController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EmployeeController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\OvertimeSettingController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
 use App\Models\Document;
 use App\Models\OvertimeSetting;
 
@@ -86,4 +88,17 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::post("/overtime", [OvertimeController::class, 'create']);
     Route::patch("/overtime/{id}", [OvertimeController::class, 'approval']);
     Route::delete("/overtime/{id}", [OvertimeController::class, 'delete']);
+
+
+    Route::get('/profile', [CompanyController::class, 'showProfileData']);
+    Route::put('/profile', [CompanyController::class, 'updateProfileData']);
+    Route::get('/profile/company', [CompanyController::class, 'getCompanyStructure']);
+    Route::put('/profile/company', [CompanyController::class, 'updateCompanyStructure']);
+    Route::post('/departments', [CompanyController::class, 'createDepartment']);
+    Route::put('/departments/{department}', [CompanyController::class, 'updateDepartment']);
+    Route::post('/positions', [CompanyController::class, 'createPosition']);
+    Route::put('/positions/{position}', [CompanyController::class, 'updatePosition']);
+
+    Route::delete('/departments/{department}', [CompanyController::class, 'deleteDepartment']);
+    Route::delete('/positions/{position}', [CompanyController::class, 'deletePosition']);
 });

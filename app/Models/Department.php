@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Testing\Fluent\Concerns\Has;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Department extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     protected $table = 'departments';
 
     protected $fillable = [
@@ -21,11 +21,12 @@ class Department extends Model
         'deleted_at',
     ];
 
-    public function position(){
+    public function positions(){
         return $this->hasMany(Position::class);
     }
 
     public function company(){
-        return $this->hasOne(Company::class, 'company_id', 'comapny_id');
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
     }
+
 }

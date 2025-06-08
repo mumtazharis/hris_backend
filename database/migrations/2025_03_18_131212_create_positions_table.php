@@ -14,12 +14,14 @@ return new class extends Migration
         Schema::create('positions', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
-            // $table->decimal('salary', 10, 2)->default(0);
+            $table->string('company_id');
+            $table->foreign('company_id')->references('company_id')->on('companies')->onDelete('restrict');
+            $table->foreignId('department_id')->constrained('departments')->onDelete('restrict');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->unique(['company_id', 'department_id', 'name']);
         });
-        
     }
 
     /**
@@ -27,6 +29,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('positions', function (Blueprint $table) {
+            $table->dropUnique(['company_id', 'department_id', 'name']);
+            $table->dropForeign(['company_id']);
+            $table->dropColumn('company_id');
+        });
         Schema::dropIfExists('positions');
     }
 };

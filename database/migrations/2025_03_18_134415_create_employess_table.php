@@ -16,14 +16,14 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->unique()->onDelete('cascade');
             $table->string('company_id');
+            $table->foreign('company_id')->references('company_id')->on('companies')->onDelete('cascade');
             $table->foreignId('ck_setting_id')->nullable()->constrained('check_clock_settings');
             $table->string('employee_id')->unique();
             $table->string('nik')->nullable();
             $table->string('first_name');
             $table->string('last_name');
             $table->foreignId('position_id')->nullable()->constrained('positions');
-            // $table->foreignId('department_id')->nullable()->constrained('departments');
-            // $table->string('department')->nullable();
+            $table->foreignId('department_id')->nullable()->constrained('departments'); 
             $table->string('address')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
@@ -40,13 +40,13 @@ return new class extends Migration
             $table->string('bank_code')->nullable();
             $table->foreign('bank_code')->references('code')->on('banks');
             $table->string('account_number')->nullable();
-
             $table->date('contract_end')->nullable();
             $table->date('join_date')->nullable();
             $table->date('exit_date')->nullable();
             $table->string('employee_photo')->nullable();
             $table->enum('employee_status', ['Active', 'Retire', 'Resign', 'Fired'])->default('Active')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         DB::statement("
