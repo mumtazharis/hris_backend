@@ -14,6 +14,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -103,11 +104,42 @@ class AuthController extends Controller
         if (!$user || !Hash::check($password, $user->password)) {
             return response()->json(['errors' => ['message' => 'Invalid E-mail or Password']], 401);
         }
-    
         // Jika login berhasil, buat token dan kirimkan sebagai response
         return response()->json([
             'token' => $user->createToken('API Token')->plainTextToken,
             'is_profile_complete' => $user->is_profile_complete,
+        ]);
+    }
+
+    public function loginEmployee(Request $request){
+        // Cari employee berdasarkan employee_id
+        $employee = Employee::where('employee_id', $request->employee_id)->first();
+
+        if (!$employee || !$employee->user) {
+            return response()->json([
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
+            ], 401);
+        }
+
+        $user = $employee->user;
+
+        // Cek apakah company_id cocok
+        if ($user->company_id != $request->company_id) {
+            return response()->json([
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
+            ], 401);
+        }
+
+        // Cek password
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
+            ], 401);
+        }
+
+        // Jika berhasil login
+        return response()->json([
+            'token' => $user->createToken('API Token')->plainTextToken,
         ]);
     }
     
