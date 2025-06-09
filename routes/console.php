@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\AutoMarkAbsent;
 use Illuminate\Foundation\Console\ClosureCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -17,3 +18,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command(GenerateMonthlyBills::class)->everyMinute();
 Schedule::command(UpdateOverdueAdminPayments::class)->everyMinute();
+
+Schedule::command(AutoMarkAbsent::class)->everyMinute();

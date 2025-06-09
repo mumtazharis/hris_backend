@@ -13,9 +13,16 @@ class CheckClockSetting extends Model
 
     // Specify the fillable fields
     protected $fillable = [
+        'company_id',
         'name',
         'latitude',
         'longitude',
         'radius',
     ];
+    
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
+    }
+
 }

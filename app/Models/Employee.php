@@ -13,7 +13,6 @@ class Employee extends Model
     protected $table = 'employees';
     protected $fillable = [
     'user_id',
-    'ck_setting_id',
     'company_id',
     'employee_id',
     'nik',
@@ -44,11 +43,6 @@ class Employee extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function checkClockSetting()
-    {
-        return $this->belongsTo(CheckClockSetting::class, 'ck_setting_id');
     }
 
     public function position()

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CheckClockSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CheckClockSettingController extends Controller
 {
@@ -54,8 +55,12 @@ class CheckClockSettingController extends Controller
                 'radius' => 'nullable|numeric',
             ]);
 
-            $record = CheckClockSetting::findOrFail($validatedData['data_id']);
-            
+            $hrUser = Auth::user();
+            $companyId = $hrUser->company_id;
+            $record = CheckClockSetting::where('id', $validatedData['data_id'])
+                ->where('company_id', $companyId)
+                ->firstOrFail();
+
             $record->fill([
                 'latitude' => $validatedData['latitude'] ?? $record->latitude,
                 'longitude' => $validatedData['longitude'] ?? $record->longitude,
@@ -72,7 +77,6 @@ class CheckClockSettingController extends Controller
             return response()->json([
                 'errors' => ['message' => 'Failed to update the data']
             ], 422);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'errors' => ['message' => 'Record not found']

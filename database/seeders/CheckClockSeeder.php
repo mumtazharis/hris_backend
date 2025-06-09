@@ -16,44 +16,48 @@ class CheckClockSeeder extends Seeder
      */
     public function run(): void
     {
-        $employeeIds = DB::table('employees')->whereIn('employee_status', ['Active'])->pluck('id')->toArray();
+        $companyIds = DB::table('companies')->pluck('company_id')->toArray();
         $statuses = ['Present', 'Sick Leave', 'Annual Leave'];
         $approvalStatuses = ['Approved', 'Pending', 'Rejected'];
 
-        $forcedRejectedIds = Arr::random($employeeIds, min(3, count($employeeIds))); // Just in case there are < 3 employees
-        $usedIds = [];
+        foreach ($companyIds as $companyId) {
+            // Get active employees of the company
+            $employeeIds = DB::table('employees')
+                ->where('company_id', $companyId)
+                ->where('employee_status', 'Active')
+                ->pluck('id')
+                ->toArray();
 
-        foreach ($employeeIds as $employeeId) {
-            $status = Arr::random($statuses);
-            $approval = in_array($employeeId, $forcedRejectedIds) ? 'Pending' : Arr::random($approvalStatuses);
+            // Get clock settings for the company
+            $ckSettingIds = DB::table('check_clock_settings')
+                ->where('company_id', $companyId)
+                ->pluck('id')
+                ->toArray();
 
-            CheckClock::create([
-                'employee_id' => $employeeId,
-                'approver_id' => Arr::random($employeeIds),
-                'check_clock_date' => Carbon::now(),
-                'status' => $status,
-                'status_approval' => $approval,
-                'reject_reason' => $approval === 'Rejected' ? 'No reason provided' : null,
-            ]);
+            // Skip if no data
+            if (empty($employeeIds) || empty($ckSettingIds)) {
+                continue;
+            }
+
+            $forcedRejectedIds = Arr::random($employeeIds, min(3, count($employeeIds)));
+
+            // Force one employee to always be 'Present'
+            $presentEmployeeId = Arr::random($employeeIds);
+
+            foreach ($employeeIds as $employeeId) {
+                $status = $employeeId === $presentEmployeeId ? 'Present' : Arr::random($statuses);
+                $approval = in_array($employeeId, $forcedRejectedIds) ? 'Pending' : Arr::random($approvalStatuses);
+
+                CheckClock::create([
+                    'employee_id' => $employeeId,
+                    'submitter_id' => Arr::random($employeeIds),
+                    'ck_setting_id' => Arr::random($ckSettingIds),
+                    'check_clock_date' => Carbon::now()->toDateString(),
+                    'status' => $status,
+                    'status_approval' => $approval,
+                    'reject_reason' => $approval === 'Rejected' ? 'No reason provided' : null,
+                ]);
+            }
         }
-
-        // $minPending = 0;
-        // foreach ($employeeIds as $employeeId) {
-        //     $status = Arr::random($statuses);
-        //     $approval = Arr::random($approvalStatuses);
-
-        //     if ($approval === 'Pending') {
-        //         $minPending++;
-        //     }
-
-        //     CheckClock::create([
-        //         'employee_id' => $employeeId,
-        //         'approver_id' => Arr::random($employeeIds), // Fixed: Use $employeeIds array instead of $employeeId
-        //         'check_clock_date' => Carbon::now(),
-        //         'status' => $status, 
-        //         'status_approval' => $approval,
-        //         'reject_reason' => $approval === 'Rejected' ? 'No reason provided' : null,
-        //     ]);
-        // }
     }
 }

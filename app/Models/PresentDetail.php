@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PresentDetail extends Model
 {
-    protected $table = 'absent_detail_cc';
+    protected $table = 'present_detail_cc';
 
     protected $fillable = [
         'ck_id',

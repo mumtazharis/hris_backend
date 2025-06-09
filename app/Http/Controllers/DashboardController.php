@@ -9,46 +9,49 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {   
     public function dashboard()
     {
+        $hrUser = Auth::user();
+        $companyId = $hrUser->company_id;
         return response()->json([
-            'employeeCount' => $this->getEmployeeCount(),
-            'approvalStatus' => $this->getApprovalStatus(),
-            'attendancePercentage' => $this->getAttendance(),
-            // 'getOvertimeStatus' => $this->getOvertimeStatus(),
-            'employeeAge' => $this->getEMployeeAge(),
-            'lateEmployee' => $this->getLateEmployee(),
-            'employeeWorkStatus' => $this->getEmployeeWorkStatus(),
-            'employeeGender' => $this->getEmployeeGender(),
-            'employeeMaritalStatus' => $this->getEmployeeMaritalStatus(),
-            'employeeReligion' => $this->getEmployeeReligion(),
-            'employeeWorkYear' => $this->getEmployeeWorkYear()
+            'employeeCount' => $this->getEmployeeCount($companyId),
+            'approvalStatus' => $this->getApprovalStatus($companyId),
+            'attendancePercentage' => $this->getAttendance($companyId),
+            // 'getOvertimeStatus' => $this->getOvertimeStatus($companyId),
+            'employeeAge' => $this->getEMployeeAge($companyId),
+            'lateEmployee' => $this->getLateEmployee($companyId),
+            'employeeWorkStatus' => $this->getEmployeeWorkStatus($companyId),
+            'employeeGender' => $this->getEmployeeGender($companyId),
+            'employeeMaritalStatus' => $this->getEmployeeMaritalStatus($companyId),
+            'employeeReligion' => $this->getEmployeeReligion($companyId),
+            'employeeWorkYear' => $this->getEmployeeWorkYear($companyId)
         ]);
     }
-    public function getEmployeeCount(){
+    public function getEmployeeCount(string $companyId){
         return DB::select("
             SELECT
                 COUNT(*) AS \"Total Employee\",
                 COUNT(*) FILTER (
-                    WHERE employee_status = 'Active'
-                    AND join_date >= CURRENT_DATE - INTERVAL '30 days'
+                    WHERE e.employee_status = 'Active'
+                    AND e.join_date >= CURRENT_DATE - INTERVAL '30 days'
                 ) AS \"New Employee\",
                 COUNT(*) FILTER (
-                    WHERE employee_status = 'Active'
+                    WHERE e.employee_status = 'Active'
                 ) AS \"Active Employee\",
                 COUNT(*) FILTER (
-                    WHERE employee_status = 'Resigned'
+                    WHERE e.employee_status = 'Resigned'
                 ) AS \"Resigned Employee\"
-            FROM employees
-            WHERE employees.company_id = ?
-
-        ", [Auth::user()->company_id]);
+            FROM employees e
+            JOIN users u ON e.user_id = u.id
+            WHERE e.company_id = ?
+        ", [$companyId]);
 
     }
-    public function getApprovalStatus()
+    public function getApprovalStatus(string $companyId)
     {
         return DB::select("
             select
@@ -62,7 +65,7 @@ class DashboardController extends Controller
         ", [Auth::user()->company_id]);
     }
 
-    public function getAttendance(){
+    public function getAttendance(string $companyId){
         return DB::select("
             select
                 count(*) filter (where cc.status = 'Present') as \"On Time\",
@@ -75,7 +78,7 @@ class DashboardController extends Controller
         ", [Auth::user()->company_id]);
     }
 
-    public function getOvertimeStatus()
+    public function getOvertimeStatus(string $companyId)
     {
         return DB::select("
             select
@@ -89,7 +92,7 @@ class DashboardController extends Controller
         ", [Auth::user()->company_id]);
     }
 
-    public function getEMployeeAge(){
+    public function getEMployeeAge(string $companyId){
         return DB::select("
             SELECT
                 COUNT(*) FILTER (WHERE usia BETWEEN 21 AND 30) AS \"21-30\",
@@ -97,13 +100,15 @@ class DashboardController extends Controller
                 COUNT(*) FILTER (WHERE usia BETWEEN 41 AND 50) AS \"41-50\",
                 COUNT(*) FILTER (WHERE usia >= 51) AS \"51++\"
             FROM (
-                SELECT DATE_PART('year', AGE(CURRENT_DATE, birth_date)) AS usia
-                FROM employees where employees.company_id = ?
+                SELECT DATE_PART('year', AGE(CURRENT_DATE, e.birth_date)) AS usia
+                FROM employees e
+                 JOIN users u ON e.user_id = u.id 
+                WHERE e.company_id = ?
             ) AS sub
-        ", [Auth::user()->company_id]);
+        ", [$companyId]);
     }
 
-    public function getLateEmployee(){
+    public function getLateEmployee(string $companyId){
        return DB::select("
             select
                 e.first_name || ' ' || e.last_name as \"Name\",
@@ -117,30 +122,31 @@ class DashboardController extends Controller
         ", [Auth::user()->company_id]);
     }
 
-    public function getEmployeeWorkStatus(){
+    public function getEmployeeWorkStatus(string $companyId){
         return DB::select("
             select 
                 COUNT(*) filter (where e.contract_type = 'Permanent') as \"Permanent\",
                 COUNT(*) filter (where e.contract_type = 'Internship') as \"Internship\",
                 COUNT(*) filter (where e.contract_type = 'Contract') as \"Contract\"
-            from employees e 
-            where e.company_id = ?
-        ", [Auth::user()->company_id]);
+            from employees e
+            JOIN users u ON e.user_id = u.id
+            WHERE e.company_id = ?
+        ", [$companyId]);
 
     }
 
-    public function getEmployeeGender(){
+    public function getEmployeeGender(string $companyId){
         return DB::select("
             select
                 count(*) filter (where e.gender = 'Male') as \"Male\",
                 count(*) filter (where e.gender = 'Female') as \"Female\"
             from employees e
-            where e.employee_status = 'Active'
-            and e.company_id = ?
-        ", [Auth::user()->company_id]);
+            JOIN users u ON e.user_id = u.id
+            where e.employee_status = 'Active' AND e.company_id = ?
+        ", [$companyId]);
     }
 
-    public function getEmployeeMaritalStatus(){
+    public function getEmployeeMaritalStatus(string $companyId){
         return DB::select("
             select
                 count(*) filter (where e.marital_status = 'Single') as \"Single\",
@@ -148,12 +154,12 @@ class DashboardController extends Controller
                 count(*) filter (where e.marital_status = 'Divorced') as \"Divorced\",
                 count(*) filter (where e.marital_status = 'Widowed') as \"Widowed\"
             from employees e
-            where e.employee_status = 'Active'
-            and e.company_id = ?
-        ", [Auth::user()->company_id]);
+            JOIN users u ON e.user_id = u.id
+            where e.employee_status = 'Active' AND e.company_id = ?
+        ", [$companyId]);
     }
 
-    public function getEmployeeReligion(){
+    public function getEmployeeReligion(string $companyId){
         return DB::select("
             select
                 count(*) filter (where e.religion = 'Islam') as \"Islam\",
@@ -163,21 +169,23 @@ class DashboardController extends Controller
                 count(*) filter (where e.religion = 'Confucianism') as \"Confucianism\",
                 count(*) filter (where e.religion = 'Other') as \"Other\"
             from employees e
-            where e.employee_status = 'Active'
-            and e.company_id = ?
-        ", [Auth::user()->company_id]);
+            JOIN users u ON e.user_id = u.id
+            where e.employee_status = 'Active' AND e.company_id = ?
+        ", [$companyId]);
     }
 
-    public function getEmployeeWorkYear(){
+    public function getEmployeeWorkYear(string $companyId){
         return DB::select("
              SELECT
                 COUNT(*) FILTER (WHERE year <=1) AS \"0-1\",
                 COUNT(*) FILTER (WHERE year BETWEEN 2 AND 5) AS \"2-5\",
                 COUNT(*) FILTER (WHERE year >= 6) AS \"6++\"
             FROM (
-                SELECT DATE_PART('year', AGE(CURRENT_DATE, join_date)) AS year
-                FROM employees where employees.company_id = ?
+                SELECT DATE_PART('year', AGE(CURRENT_DATE, e.join_date)) AS year
+                FROM employees e
+                JOIN users u ON e.user_id = u.id 
+                AND e.company_id = ?
             ) AS sub
-        ", [Auth::user()->company_id]);
+        ", [$companyId]);
     }
 }

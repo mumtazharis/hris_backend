@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     
     // Resource routes
     Route::resource('check-clocks', CheckClockController::class);
+    Route::get('cc-employee-data', [CheckClockController::class, 'getEmployeeData']);
+    Route::post('reject-check-clock', [CheckClockController::class, 'reject']);
     // Route::resource('check-clock-settings', CheckClockSettingController::class);
     Route::resource('check-clock-setting-times', CheckClockSettingTimesController::class);
     

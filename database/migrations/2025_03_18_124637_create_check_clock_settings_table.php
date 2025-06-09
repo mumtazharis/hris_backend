@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('check_clock_settings', function (Blueprint $table) {
             $table->id();
+            $table->string('company_id')->nullable();
+            $table->foreign('company_id')->references('company_id')->on('companies');
             $table->string('name');
             $table->string('latitude')->nullable();
             $table->string('longitude')->nullable();
