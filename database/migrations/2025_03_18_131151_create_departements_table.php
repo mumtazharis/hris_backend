@@ -15,10 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('company_id');
             $table->foreign('company_id')->references('company_id')->on('companies');
-            $table->string('name')->unique();
+            $table->string('name');
             $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->unique(['company_id', 'name']);
         });
     }
 

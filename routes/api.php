@@ -44,7 +44,9 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
 Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/getUser', [UserController::class, 'getUser']);
-    
+
+    Route::get("/profile", [ProfileController::class, 'show']);
+    Route::patch("/profile", [ProfileController::class, 'update']);
     // Resource routes
     Route::resource('check-clocks', CheckClockController::class);
     // Route::resource('check-clock-settings', CheckClockSettingController::class);
@@ -90,8 +92,17 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::delete("/overtime/{id}", [OvertimeController::class, 'delete']);
 
     Route::get("/company", [CompanyController::class, 'show']);
-    Route::get("/profile", [ProfileController::class, 'show']);
-    Route::get("/getCompanyDepPos", [ProfileController::class, 'getCompanyDepPos']);
+   
+    Route::get("/getCompanyDepPos", [CompanyController::class, 'getCompanyDepPos']);
+
+
+
+    Route::post("/department", [CompanyController::class, 'addDepartment']);
+    Route::patch("/department", [CompanyController::class, 'editDepartment']);
+    Route::delete("/department", [CompanyController::class, 'deleteDepartment']);
+    Route::post("/position", [CompanyController::class, 'addPosition']);
+    Route::patch("/position", [CompanyController::class, 'editPosition']);
+    Route::delete("/position", [CompanyController::class, 'deletePosition']);
 });
 
 // ROLE EMPLOYEE

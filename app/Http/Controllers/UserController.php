@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class UserController extends Controller
@@ -19,8 +20,16 @@ class UserController extends Controller
             ->whereMonth('deadline', $currentMonth)
             ->whereYear('deadline', $currentYear)
             ->first();
-        // Jika login berhasil, buat token dan kirimkan sebagai response
+
+        // $userPhotoUrl = null;
+        // if (!empty($user->user_photo) && $user->user_photo !== '') {
+        //     $userPhotoUrl = Storage::disk('s3')->temporaryUrl(
+        //         $user->user_photo,
+        //         Carbon::now()->addMinutes(10) // berlaku 10 menit
+        //     );
+        // }
         return response()->json([
+            // 'photo_url' => $userPhotoUrl,
             'full_name' => $user->full_name,
             'user_role' => $user->role,
             'company_name' => $user->company->name,
