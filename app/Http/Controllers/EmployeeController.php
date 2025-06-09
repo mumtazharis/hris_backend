@@ -59,7 +59,6 @@ class EmployeeController extends Controller
             from employees e 
             left join positions p on e.position_id = p.id
             left join departments d on p.department_id = d.id
-            left join check_clock_settings ccs on e.ck_setting_id = ccs.id
             join users u on e.user_id = u.id
             where 
             e.company_id = ?
