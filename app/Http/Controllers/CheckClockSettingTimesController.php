@@ -119,13 +119,13 @@ class CheckClockSettingTimesController extends Controller
         $record->clock_in = $validated['clockIn'];
         $record->max_clock_in = $validated['maxClockIn'];
         $record->min_clock_in = $validated['minClockIn'];
-        if (isset($validated['clockOut'])) {
+        // if (isset($validated['clockOut'])) {
             $record->clock_out = $validated['clockOut'];
-        }
+        // }
 
-        if (isset($validated['maxClockOut'])) {
+        // if (isset($validated['maxClockOut'])) {
             $record->max_clock_out = $validated['maxClockOut'];
-        }
+        // }
         if ($record->save()) {
             return response()->json(['success' => ['message' => 'Successfully update the setting times']], 200);
         }
