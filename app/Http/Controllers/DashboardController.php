@@ -7,6 +7,7 @@ use App\Models\Employee;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -58,8 +59,10 @@ class DashboardController extends Controller
                 count(*) filter (where cc.status_approval = 'Pending') as \"Waiting\",
                 count(*) filter (where cc.status_approval = 'Rejected') as \"Rejected\"
             from check_clocks cc
+            join employees e on e.id = cc.employee_id
             where cc.check_clock_date::date = CURRENT_DATE
-        ");
+            AND e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getAttendance(string $companyId){
@@ -69,8 +72,10 @@ class DashboardController extends Controller
                 count(*) filter (where cc.status = 'Late') as \"Late\",
                 count(*) filter (where cc.status = 'Absent') as \"Absent\"
             from check_clocks cc
+            join employees e on e.id = cc.employee_id
             where cc.check_clock_date::date = CURRENT_DATE
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getOvertimeStatus(string $companyId)
@@ -81,8 +86,10 @@ class DashboardController extends Controller
                 count(*) filter (where o.status_approval = 'Waiting') as \"Waiting\",
                 count(*) filter (where o.status_approval = 'Rejected') as \"Rejected\"
             from overtime o
+            join employees e on e.id = o.employee_id
             where o.date::date = CURRENT_DATE
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getEMployeeAge(string $companyId){
@@ -111,7 +118,8 @@ class DashboardController extends Controller
             join employees e on cc.employee_id = e.id
             join positions p on e.position_id = p.id
             where cc.status = 'present'
-        ");
+            and e.company_id = ?
+        ", [Auth::user()->company_id]);
     }
 
     public function getEmployeeWorkStatus(string $companyId){
@@ -155,9 +163,9 @@ class DashboardController extends Controller
         return DB::select("
             select
                 count(*) filter (where e.religion = 'Islam') as \"Islam\",
-                count(*) filter (where e.religion = 'Hinduism') as \"Hinduism\",
+                count(*) filter (where e.religion = 'Hindu') as \"Hindu\",
                 count(*) filter (where e.religion = 'Buddhism') as \"Buddhism\",
-                count(*) filter (where e.religion = 'Christianity') as \"Christianity\",
+                count(*) filter (where e.religion = 'Christian') as \"Christian\",
                 count(*) filter (where e.religion = 'Confucianism') as \"Confucianism\",
                 count(*) filter (where e.religion = 'Other') as \"Other\"
             from employees e

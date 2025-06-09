@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CheckClockController;
 use App\Http\Controllers\CheckClockSettingController;
 use App\Http\Controllers\CheckClockSettingTimesController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EmployeeController;
@@ -15,13 +16,15 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\OvertimeSettingController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
 use App\Models\Document;
 use App\Models\OvertimeSetting;
 
 Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('/completeRegister', [AuthController::class, 'completeRegister'])->middleware('auth:sanctum');
-    Route::post('login', [AuthController::class, 'login'])->name('login');
+    Route::post('login', [AuthController::class, 'login'])->name('loginEmployee');
+    Route::post('login-employee', [AuthController::class, 'loginEmployee'])->name('login');
     Route::post('signup-with-google', [AuthController::class, 'signupWithGoogle'])->name('login_google');
     Route::post('signin-with-google', [AuthController::class, 'loginWithGoogle'])->name('login_google');
     Route::post('mail-test', [MailTest::class, 'store'])->name('mail_test');
@@ -29,32 +32,31 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('reset-process', [ResetPasswordController::class, 'resetPassword'])->name('reset_password_process');
     Route::post('token-checker', [ResetPasswordController::class, 'checkToken'])->name('check_token');
 
-    // Route::get('dashboardnologin', [DashboardController::class, 'dashboard']);
     // Route::post('payment', [PaymentController::class, 'createXenditInvoice'])->name('payment');
-    Route::post('payment', [PaymentController::class, 'createInvoice'])->name('payment');
     Route::post('order_summary', [PaymentController::class, 'getOrderSummary'])->name('order_summary');
     Route::post('/xendit/webhook', [PaymentController::class, 'handle']);
+    // Route::get('/payment', [DocumentController::class, 'payment']);
     // Route::get('/employees/export-csv', [EmployeeController::class, 'exportCsv'])->name('employees.exportCsv');
 });
 
-Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/users', [UserController::class, 'index']);
-    Route::post('/users', [UserController::class, 'store']);
-    Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::put('/users/{id}', [UserController::class, 'update']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
+// ROLE ADMIN
+Route::middleware('auth:sanctum','role:admin')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/getUser', [UserController::class, 'getUser']);
+    
     // Resource routes
     Route::resource('check-clocks', CheckClockController::class);
     Route::get('cc-employee-data', [CheckClockController::class, 'getEmployeeData']);
     Route::post('reject-check-clock', [CheckClockController::class, 'reject']);
     // Route::resource('check-clock-settings', CheckClockSettingController::class);
     Route::resource('check-clock-setting-times', CheckClockSettingTimesController::class);
-
+    
     Route::post('check-clock-rule', [CheckClockSettingController::class, 'update']);
     Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
-
+    //payment
+    Route::get('/payment-history', [PaymentController::class, 'index']);
+    Route::get('payment', [PaymentController::class, 'createInvoice'])->name('payment');
     // Route::post('/verify-token', function () {
     // return response()->json([
     //     // 'user' => $request->user(),
@@ -88,4 +90,14 @@ Route::middleware('auth:sanctum','role:employee,admin')->group(function () {
     Route::post("/overtime", [OvertimeController::class, 'create']);
     Route::patch("/overtime/{id}", [OvertimeController::class, 'approval']);
     Route::delete("/overtime/{id}", [OvertimeController::class, 'delete']);
+
+    Route::get("/company", [CompanyController::class, 'show']);
+    Route::get("/profile", [ProfileController::class, 'show']);
+    Route::get("/getCompanyDepPos", [ProfileController::class, 'getCompanyDepPos']);
+});
+
+// ROLE EMPLOYEE
+Route::middleware('auth:sanctum','role:employee')->group(function () {
+
+
 });

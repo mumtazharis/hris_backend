@@ -17,41 +17,58 @@ use Inertia\Inertia;
 
 class PaymentController extends Controller
 {
-    public function index()
+
+
+    public function index(): JsonResponse
     {
-        $products = Bills::with('payments')->get();
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not authenticated.'
+            ], 401);
+        }
 
-        $products->map(function ($product) {
-            $product->payment_url = $product->payments->count() > 0 ? $product->payments[0]->payment_url : null;
-            return $product;
-        });
+        $loggedInUserId = Auth::id(); // Mendapatkan ID user yang sedang login
 
-        // return Inertia::render('Product/Index', [
-        //     'products' => $products,
-        // ]);
-    }
+        //    $userId = $request->input('user_id');
 
-    public function getOrderSummary(Request $request): JsonResponse
-    {
-        // if (!Auth::check()) {
-        //     return response()->json([
-        //         'status' => 'error',
-        //         'message' => 'User not authenticated.'
-        //     ], 401);
-        // }
-
-        // $loggedInUserId = 1;
-
-        $userId = $request->input('user_id');
-
-        if (!$userId) {
+        if (!$loggedInUserId) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'User ID is required.'
             ], 400);
         }
 
-        $pendingBills = Bills::where('user_id', $userId)
+        $index = Bills::where('user_id', $loggedInUserId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $index
+        ]);
+    }
+
+    public function getOrderSummary(): JsonResponse
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not authenticated.'
+            ], 401);
+        }
+
+        $loggedInUserId = Auth::id();
+        // $userId = $request->input('user_id');
+
+        if (!$loggedInUserId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User ID is required.'
+            ], 400);
+        }
+
+        $pendingBills = Bills::where('user_id', $loggedInUserId)
             ->where('status', 'pending')
             ->get();
 
@@ -61,7 +78,7 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function createInvoice(Request $request)
+    public function createInvoice()
     {
         $api_key = base64_encode(env('XENDIT_SECRET_KEY'));
         $headers = [
@@ -70,19 +87,17 @@ class PaymentController extends Controller
         ];
 
 
-        //  if (!Auth::check()) {
-        //     return response()->json([
-        //         'status' => 'error',
-        //         'message' => 'User not authenticated.'
-        //     ], 401);
-        // }
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not authenticated.'
+            ], 401);
+        }
 
-        // $loggedInUserId = Auth::id(); // Mendapatkan ID user yang sedang login
+        $loggedInUserId = Auth::id();
+        // $userId = $request->input('user_id');
 
-        // $loggedInUserId = 7;
-        $userId = $request->input('user_id');
-
-        if (!$userId) {
+        if (!$loggedInUserId) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'User ID is required.'
@@ -91,9 +106,9 @@ class PaymentController extends Controller
         $currentPeriod = now()->format('m-Y');
 
         $bill = DB::table('bills')
-            ->where('user_id', $userId)
+            ->where('user_id', $loggedInUserId)
             ->where('period', $currentPeriod)
-            ->where('status', 'pending')
+            ->whereIn('status',  ['pending', 'overdue'])
             ->latest('created_at')
             ->first();
 
@@ -109,7 +124,7 @@ class PaymentController extends Controller
         $res = Http::withHeaders($headers)->post('https://api.xendit.co/v2/invoices', [
             'external_id' => $bill->payment_id,
             'total_employee' => $bill->total_employee,
-            'amount' => $bill->amount,
+            'amount' => $bill->amount + ($bill->fine ?? 0), // jumlah amount + fine
             'invoice_duration' => $invoiceDuration,
         ]);
 
@@ -140,7 +155,8 @@ class PaymentController extends Controller
                 return response()->json([
                     'message' => 'No matching bill found or already updated.',
                     'payment_id' => $payment_id,
-                    'status' => $status
+                    'status' => $status,
+                    'payment_at' => now()
                 ], 404);
             }
         } else {
