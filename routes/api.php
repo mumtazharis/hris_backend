@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CheckClockController;
 use App\Http\Controllers\CheckClockSettingController;
 use App\Http\Controllers\CheckClockSettingTimesController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EmployeeController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\OvertimeSettingController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
 use App\Models\Document;
 use App\Models\OvertimeSetting;
 
@@ -41,7 +43,7 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
 // ROLE ADMIN
 Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/navbar', [UserController::class, 'navbar']);
+    Route::get('/getUser', [UserController::class, 'getUser']);
     
     // Resource routes
     Route::resource('check-clocks', CheckClockController::class);
@@ -86,6 +88,10 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::post("/overtime", [OvertimeController::class, 'create']);
     Route::patch("/overtime/{id}", [OvertimeController::class, 'approval']);
     Route::delete("/overtime/{id}", [OvertimeController::class, 'delete']);
+
+    Route::get("/company", [CompanyController::class, 'show']);
+    Route::get("/profile", [ProfileController::class, 'show']);
+    Route::get("/getCompanyDepPos", [ProfileController::class, 'getCompanyDepPos']);
 });
 
 // ROLE EMPLOYEE

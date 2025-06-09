@@ -574,7 +574,7 @@ class EmployeeController extends Controller
     public function previewCsv(Request $request)
     {
         $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt',
+            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
         ]);
 
         $file = $request->file('csv_file');
@@ -708,7 +708,7 @@ class EmployeeController extends Controller
 
             'employees.*.company_id' => [
                     'required',
-                    Rule::in([$hrUser->company_id]) // hanya boleh company_id milik user login
+                    Rule::in([$hrUser->company_id]) 
             ],
             
             'employees.*.email' => [
@@ -793,16 +793,93 @@ class EmployeeController extends Controller
             return response()->json(['message' => 'HR user not authenticated or company_id not found.'], 403);
         }
 
+        // DB::beginTransaction();
+
+        // try {
+        //     foreach ($request->employees as $data) {
+        //          $currentYearTwoDigits = date('y');
+
+        //         do {
+        //             $uniqueRandomCode = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        //             $generatedEmployeeId = "{$currentYearTwoDigits}{$uniqueRandomCode}";
+        //         } while (Employee::where('employee_id', $generatedEmployeeId)->exists());
+
+        //         $user = User::create([
+        //             'full_name' => $data['first_name'] . ' ' . $data['last_name'],
+        //             'password' => Hash::make($generatedEmployeeId),
+        //             'role' => 'employee',
+        //             'company_id' => $hrUser->company_id,
+        //             'is_profile_complete' => false,
+        //         ]);
+
+        //         Employee::create([
+        //             'user_id' => $user->id,
+        //             'company_id' => $data['company_id'],
+        //             'employee_id' => $generatedEmployeeId,
+        //             'nik' => $data['nik'],
+        //             'first_name' => $data['first_name'],
+        //             'last_name' => $data['last_name'],
+        //             'email' => $data['email'],
+        //             'phone' => $data['phone'],
+        //             'position_id' => $data['position_id'],
+        //             'address' => $data['address'],
+        //             'birth_place' => $data['birth_place'],
+        //             'birth_date' => $data['birth_date'],
+        //             'education' => $data['education'],
+        //             'religion' => $data['religion'],
+        //             'marital_status' => $data['marital_status'],
+        //             'citizenship' => $data['citizenship'],
+        //             'gender' => $data['gender'],
+        //             'blood_type' => $data['blood_type'],
+        //             'salary' => $data['salary'] ?? null,
+        //             'contract_type' => $data['contract_type'],
+        //             'bank_code' => $data['bank_code'] ?? null,
+        //             'account_number' => $data['account_number'] ?? null,
+        //             'contract_end' => $data['contract_end'] ?? null,
+        //             'join_date' => $data['join_date'],
+        //             'exit_date' => $data['exit_date'] ?? null,
+        //             'employee_photo' => $data['employee_photo'] ?? null,
+        //             'employee_status' => $data['employee_status'],
+        //         ]);
+        //     }
+
+        //     DB::commit();
+
+        //     return response()->json(['message' => 'Import successfully!'], 201);
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     return response()->json(['message' => 'Failed to save data.', 'error' => $e->getMessage()], 500);
+        // }
         DB::beginTransaction();
 
         try {
-            foreach ($request->employees as $data) {
-                 $currentYearTwoDigits = date('y');
+            $currentYearTwoDigits = date('y');
+            $employeesData = $request->employees;
+            $totalEmployees = count($employeesData);
 
-                do {
-                    $uniqueRandomCode = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
-                    $generatedEmployeeId = "{$currentYearTwoDigits}{$uniqueRandomCode}";
-                } while (Employee::where('employee_id', $generatedEmployeeId)->exists());
+            // Step 1: Get latest employee_id and extract sequence
+            $latestEmployee = Employee::where('employee_id', 'like', "{$currentYearTwoDigits}%")
+                ->orderBy('employee_id', 'desc')
+                ->first();
+
+            $lastSequence = 0;
+            if ($latestEmployee) {
+                $lastSequence = (int) substr($latestEmployee->employee_id, 2); // remove year prefix
+            }
+
+            $employeeIds = [];
+            for ($i = 1; $i <= $totalEmployees; $i++) {
+                $sequence = str_pad($lastSequence + $i, 6, '0', STR_PAD_LEFT);
+                $employeeIds[] = "{$currentYearTwoDigits}{$sequence}";
+            }
+
+            $usersToInsert = [];
+            $employeesToInsert = [];
+            $userIds = [];
+
+            // Step 2: Insert users and collect IDs
+            foreach ($employeesData as $index => $data) {
+                $generatedEmployeeId = $employeeIds[$index];
 
                 $user = User::create([
                     'full_name' => $data['first_name'] . ' ' . $data['last_name'],
@@ -812,19 +889,15 @@ class EmployeeController extends Controller
                     'is_profile_complete' => false,
                 ]);
 
-                if (!empty($data['phone'])) {
-                    $phone = preg_replace('/[^0-9]/', '', $data['phone']);
-                    if (!Str::startsWith($phone, '62')) {
-                        $phone = '62' . $phone;
-                    }
-                    $data['phone'] = '+' . $phone;
-                }
-               
+                $userIds[] = $user->id;
+            }
 
-                Employee::create([
-                    'user_id' => $user->id,
+            // Step 3: Insert employees
+            foreach ($employeesData as $index => $data) {
+                $employeesToInsert[] = [
+                    'user_id' => $userIds[$index],
                     'company_id' => $data['company_id'],
-                    'employee_id' => $generatedEmployeeId,
+                    'employee_id' => $employeeIds[$index],
                     'nik' => $data['nik'],
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
@@ -849,16 +922,22 @@ class EmployeeController extends Controller
                     'exit_date' => $data['exit_date'] ?? null,
                     'employee_photo' => $data['employee_photo'] ?? null,
                     'employee_status' => $data['employee_status'],
-                ]);
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
 
-            DB::commit();
+            Employee::insert($employeesToInsert);
 
+            DB::commit();
             return response()->json(['message' => 'Import successfully!'], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Failed to save data.', 'error' => $e->getMessage()], 500);
         }
+
+
     }
 
     public function resetPassword(string $employee_id)

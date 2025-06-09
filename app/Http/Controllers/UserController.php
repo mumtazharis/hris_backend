@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 class UserController extends Controller
 {
-    public function navbar(){
+    public function getUser(){
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $currentMonth = Carbon::now()->month;
