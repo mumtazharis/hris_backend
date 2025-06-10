@@ -24,10 +24,10 @@ class PresentCCSeeder extends Seeder
                 DB::table('present_detail_cc')->insert([
                     'ck_id' => $ckId,
                     'check_clock_type' => $type,
-                    'check_clock_time' => $type == "in" ? Carbon::now()->format('H:i:s') : Carbon::now()->addHours(8)->format('H:i:s'),
+                    'check_clock_time' => $type == "in" ? Carbon::now()->format('H:i') : Carbon::now()->addHours(8)->format('H:i'),
                     'latitude' => '3.597031',  // Example coordinates
                     'longitude' => '98.678513', // Example coordinates
-                    'evidence' => 'evidence_' . $type . '_' . $ckId . '.jpg',
+                    'evidence' => $type == "in" ? 'evidence_' . $type . '_' . $ckId . '.jpg' : null,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
                 ]);

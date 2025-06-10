@@ -44,17 +44,24 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
 Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/getUser', [UserController::class, 'getUser']);
+
     Route::patch('/user/change-password', [UserController::class, 'changePassword']);
 
     Route::get("/profile", [ProfileController::class, 'show']);
     Route::patch("/profile", [ProfileController::class, 'update']);
-    // Resource routes
+    
+    // CC Api
     Route::resource('check-clocks', CheckClockController::class);
-    // Route::resource('check-clock-settings', CheckClockSettingController::class);
+    Route::get('cc-employee-data', [CheckClockController::class, 'getEmployeeData']);
+    Route::post('reject-check-clock', [CheckClockController::class, 'reject']);
+    Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
+
+    // cc times
     Route::resource('check-clock-setting-times', CheckClockSettingTimesController::class);
     
+    // cc setting location
     Route::post('check-clock-rule', [CheckClockSettingController::class, 'update']);
-    Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
+    
     //payment
     Route::get('/payment-history', [PaymentController::class, 'index']);
     Route::get('payment', [PaymentController::class, 'createInvoice'])->name('payment');

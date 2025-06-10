@@ -15,8 +15,8 @@ class EmployeeSeeder extends Seeder
         $employees = [
             [
                 'user_id' => 2,
-                'company_id' => 'COMP002',
-                'ck_setting_id' => 1,
+                'company_id' => 'COMP001',
+                // 'ck_setting_id' => 1,
                 'employee_id' => 'EMP002',
                 'nik' => '1234567890123402',
                 'first_name' => 'Jane',
@@ -41,7 +41,7 @@ class EmployeeSeeder extends Seeder
             [
                 'user_id' => 3,
                 'company_id' => 'COMP001',
-                'ck_setting_id' => 2,
+                // 'ck_setting_id' => 2,
                 'employee_id' => 'EMP003',
                 'nik' => '1234567890123403',
                 'first_name' => 'Alice',
@@ -65,8 +65,8 @@ class EmployeeSeeder extends Seeder
             ],
             [
                 'user_id' => 4,
-                'company_id' => 'COMP002',
-                'ck_setting_id' => 1,
+                'company_id' => 'COMP001',
+                // 'ck_setting_id' => 1,
                 'employee_id' => 'EMP004',
                 'nik' => '1234567890123404',
                 'first_name' => 'Bob',
@@ -91,7 +91,7 @@ class EmployeeSeeder extends Seeder
             [
                 'user_id' => 5,
                 'company_id' => 'COMP001',
-                'ck_setting_id' => 1,
+                // 'ck_setting_id' => 2,
                 'employee_id' => 'EMP005',
                 'nik' => '1234567890123405',
                 'first_name' => 'Charlie',
@@ -115,8 +115,8 @@ class EmployeeSeeder extends Seeder
             ],
             [
                 'user_id' => 6,
-                'company_id' => 'COMP001',
-                'ck_setting_id' => 2,
+                'company_id' => 'COMP002',
+                // 'ck_setting_id' => 3,
                 'employee_id' => 'EMP006',
                 'nik' => '1234567890123406',
                 'first_name' => 'Diana',
@@ -142,7 +142,7 @@ class EmployeeSeeder extends Seeder
             [
                 'user_id' => 8,
                 'company_id' => 'COMP002',
-                'ck_setting_id' => 2,
+                // 'ck_setting_id' => 3,
                 'employee_id' => 'EMP008',
                 'nik' => '1234567890123408',
                 'first_name' => 'Eve',
@@ -166,8 +166,8 @@ class EmployeeSeeder extends Seeder
             ],
             [
                 'user_id' => 9,
-                'company_id' => 'COMP001',
-                'ck_setting_id' => 1,
+                'company_id' => 'COMP002',
+                // 'ck_setting_id' => 4,
                 'employee_id' => 'EMP009',
                 'nik' => '1234567890123409',
                 'first_name' => 'Frank',
@@ -191,8 +191,8 @@ class EmployeeSeeder extends Seeder
             ],
             [
                 'user_id' => 10,
-                'company_id' => 'COMP001',
-                'ck_setting_id' => 2,
+                'company_id' => 'COMP002',
+                // 'ck_setting_id' => 4,
                 'employee_id' => 'EMP010',
                 'nik' => '1234567890123410',
                 'first_name' => 'Grace',

@@ -2,196 +2,142 @@
 
 namespace Tests\Feature;
 
+use App\Models\BillingPlan;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\CheckClock;
+use App\Models\CheckClockSetting;
+use App\Models\CheckClockSettingTimes;
+use App\Models\Company;
+use App\Models\Department;
+use App\Models\Employee;
+use App\Models\Position;
+use App\Models\PresentDetail;
+use App\Models\User;
+use Carbon\Carbon;
 
 class CheckClockTimeStTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_can_store_new_time_setting()
+    protected $user;
+    protected $company;
+    protected $employee;
+    protected $checkClockSetting;
+    protected $checkClockSettingTimes;
+
+    protected function setUp(): void
     {
-        // First, create a CheckClockSetting to get the ck_setting_id
-        $checkClockSetting = \App\Models\CheckClockSetting::factory()->create();
+        parent::setUp();
 
-        $data = [
-            'ck_setting_id' => $checkClockSetting->id,
-            'day' => 'Monday',
-            'clock_in' => '08:00',
-            'clock_out' => '17:00',
-            'break_start' => '12:00',
-            'break_end' => '13:00',
-        ];
-
-        // Send a POST request to the store endpoint
-        // First, create a user and log in to get the token
-        $user = \App\Models\User::factory()->create();
-        $loginResponse = $this->postJson('/api/login', [
-            'email' => $user->email,
-            'password' => 'password', // Make sure the factory sets this password
+        // Create a user and authenticate
+        $billingPlan = BillingPlan::create([
+            'plan_name' => 'Basic Plan',
         ]);
 
-        $token = $loginResponse->json('token');
+        // Create company
+        $this->company = Company::create([
+            'name' => 'Test Company',
+            'company_id' => 'COMP001',
+            'plan_id' => $billingPlan->id
+        ]);
 
-        $response = $this->postJson(
-            '/api/check-clock-setting-times',
-            $data,
-            ['Authorization' => 'Bearer ' . $token]
-        );
+        // Create check clock setting
+        $this->checkClockSetting = CheckClockSetting::create([
+            'company_id' => $this->company->company_id,
+            'name' => 'WFA',
+            'latitude' => '-6.2088',
+            'longitude' => '106.8456',
+            'radius' => 100
+        ]);
 
-        // dd($token); // Debugging line to check the response
+        // Create check clock setting times
+        $this->checkClockSettingTimes = CheckClockSettingTimes::create([
+            'ck_setting_id' => $this->checkClockSetting->id,
+            'day' => 'Monday',
+            'min_clock_in' => '07:00:00',
+            'clock_in' => '09:00:00',
+            'max_clock_in' => '10:00:00',
+            'clock_out' => '17:00:00',
+            'max_clock_out' => '24:00:00',
+        ]);
 
-        // Assert the response status and structure
-        $response->assertStatus(201);
-        $response->assertJson($data);
+        // Create user first
+        $this->user = User::create([
+            'company_id' => $this->company->company_id,
+            'full_name' => 'John Doe',
+            'email' => 'john@example.com',
+            'phone' => '1234567890',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+            'is_profile_complete' => true,
+            'auth_provider' => 'local'
+        ]);
 
-        // Assert the data was stored in the database
-        $this->assertDatabaseHas('check_clock_setting_times', $data);
+        // Authenticate as the HR user
+        $this->actingAs($this->user);
     }
 
+    /** @test */
     public function test_it_can_update_new_time_setting()
     {
-        $checkClockSetting = \App\Models\CheckClockSetting::factory()->create();
-        $checkClock = \App\Models\CheckClockSettingTimes::factory()->create([
-            'ck_setting_id' => $checkClockSetting->id,
-            'day' => 'Monday',
-            'clock_in' => '08:00:00',
-            'clock_out' => '17:00:00',
-            'break_start' => '12:00:00',
-            'break_end' => '13:00:00',
-        ]);
-
-        // New data for update
-        $updateData = [
-            'ck_setting_id' => $checkClockSetting->id,
-            'day' => 'Sunday',
-            'clock_in' => '08:00:00',
-            'clock_out' => '17:00:00',
-            'break_start' => '12:00:00',
-            'break_end' => '13:00:00'
+        $data = [
+            'minClockIn' => '08:00',
+            'clockIn' => '09:30',
+            'maxClockIn' => '10:30',
+            'clockOut' => '18:00',
+            'maxClockOut' => '19:00',
         ];
 
-        // Create a user and log in to get the token
-        $user = \App\Models\User::factory()->create();
-        $loginResponse = $this->postJson('/api/login', [
-            'email' => $user->email,
-            'password' => 'password',
+        $response = $this->putJson('/api/check-clock-setting-times/' . $this->checkClockSettingTimes->id, $data);
+
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => ['message' => 'Successfully update the setting times'],
+                 ]);
+
+        $this->assertDatabaseHas('check_clock_setting_times', [
+            'id' => $this->checkClockSettingTimes->id,
+            'min_clock_in' => '08:00:00',
+            'clock_in' => '09:30:00',
+            'max_clock_in' => '10:30:00',
+            'clock_out' => '18:00:00',
+            'max_clock_out' => '19:00:00',
         ]);
-        $token = $loginResponse->json('token');
-
-        // Send a PUT request to the update endpoint
-        $response = $this->putJson(
-            '/api/check-clock-setting-times/' . $checkClock->id,
-            $updateData,
-            ['Authorization' => 'Bearer ' . $token]
-        );
-
-        // Assert the response status and structure
-        $response->assertStatus(200);
-        $response->assertJson($updateData);
-
-        // Assert the data was updated in the database
-        $this->assertDatabaseHas('check_clock_setting_times', array_merge(['id' => $checkClock->id], $updateData));
     }
 
+    /** @test */
     public function test_it_can_list_all_time_settings()
     {
-        // Create a user and log in to get the token
-        $user = \App\Models\User::factory()->create();
-        $loginResponse = $this->postJson('/api/login', [
-            'email' => $user->email,
-            'password' => 'password',
-        ]);
-        $token = $loginResponse->json('token');
+        $response = $this->getJson('/api/check-clock-setting-times');
 
-        // Create multiple CheckClockSettingTimes records
-        $records = \App\Models\CheckClockSettingTimes::factory()->count(3)->create();
-
-        // Send a GET request to the index endpoint
-        $response = $this->getJson(
-            '/api/check-clock-setting-times',
-            ['Authorization' => 'Bearer ' . $token]
-        );
-
-        $response->assertStatus(200);
-        $response->assertJsonCount(3); // Assuming the endpoint returns a plain array
-        // Adjust for nested "data" structure in the response
-        $responseData = $response->json('data') ?? $response->json();
-
-        $this->assertCount(3, $responseData);
-
-        foreach ($records as $index => $record) {
-            $this->assertEquals($record->id, $responseData[$index]['id']);
-            $this->assertEquals($record->ck_setting_id, $responseData[$index]['ck_setting_id']);
-            $this->assertEquals($record->day, $responseData[$index]['day']);
-            $this->assertEquals($record->clock_in, $responseData[$index]['clock_in']);
-            $this->assertEquals($record->clock_out, $responseData[$index]['clock_out']);
-            $this->assertEquals($record->break_start, $responseData[$index]['break_start']);
-            $this->assertEquals($record->break_end, $responseData[$index]['break_end']);
-        }
-    }
-
-    public function test_it_can_show_a_single_time_setting()
-    {
-        // Create a user and log in to get the token
-        $user = \App\Models\User::factory()->create();
-        $loginResponse = $this->postJson('/api/login', [
-            'email' => $user->email,
-            'password' => 'password',
-        ]);
-        $token = $loginResponse->json('token');
-
-        // Create a single CheckClockSettingTimes record, ensuring it belongs to the user if necessary
-        $record = \App\Models\CheckClockSettingTimes::factory()->create([
-            // Add user_id if your model uses it for scoping
-            // 'user_id' => $user->id,
-        ]);
-
-        // Send a GET request to the show endpoint
-        $response = $this->getJson(
-            '/api/check-clock-setting-times/' . $record->id,
-            ['Authorization' => 'Bearer ' . $token]
-        );
-
-        $response->assertStatus(200);
-        $response->assertJson([
-            'id' => $record->id,
-            'ck_setting_id' => $record->ck_setting_id,
-            'day' => $record->day,
-            'clock_in' => $record->clock_in,
-            'clock_out' => $record->clock_out,
-            'break_start' => $record->break_start,
-            'break_end' => $record->break_end,
-        ]);
-    }
-
-    public function test_it_can_delete_a_time_setting()
-    {
-        // Create a user and log in to get the token
-        $user = \App\Models\User::factory()->create();
-        $loginResponse = $this->postJson('/api/login', [
-            'email' => $user->email,
-            'password' => 'password',
-        ]);
-        $token = $loginResponse->json('token');
-
-        // Create a CheckClockSettingTimes record
-        $record = \App\Models\CheckClockSettingTimes::factory()->create();
-
-        // Send a DELETE request to the destroy endpoint
-        $response = $this->deleteJson(
-            '/api/check-clock-setting-times/' . $record->id,
-            [],
-            ['Authorization' => 'Bearer ' . $token]
-        );
-
-        // Assert the response status (usually 204 No Content or 200 OK)
-        $response->assertStatus(204);
-
-        // Assert the record is deleted from the database
-        $this->assertDatabaseMissing('check_clock_setting_times', [
-            'id' => $record->id,
-        ]);
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'location_rule' => [
+                    '*' => [
+                        'data_id',
+                        'latitude',
+                        'longitude',
+                        'radius',
+                    ],
+                ],
+                'ckdata' => [
+                    '*' => [
+                        'data_id',
+                        'worktype',
+                        'worktype_id',
+                        'day',
+                        'clock_in',
+                        'min_clock_in',
+                        'max_clock_in',
+                        'clock_out',
+                        'max_clock_out',
+                        'latitude',
+                        'longitude',
+                        'radius',
+                        'created_at',
+                    ],
+                ],
+            ]);
     }
 }

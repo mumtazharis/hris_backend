@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             PlansPriceSeeder::class,
             AbsentCCSeeder::class,
             PresentCCSeeder::class,
-            BillsSeeder::class,
+            // BillsSeeder::class,
             OvertimeSettingSeeder::class,
             OvertimeFormulaSeeder::class,
             OvertimeSeeder::class,
