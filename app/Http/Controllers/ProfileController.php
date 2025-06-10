@@ -26,35 +26,68 @@ class ProfileController extends Controller
             'full_name' => $user->full_name,
             'phone' => $user->phone,
             'email' => $user->email,
+            'company_name' => $user->company?->name,
         ]);
     }
 
-    public function update(Request $request){
-        $userId = Auth::id();
-        $request->validate([
-            'fullName' => 'required|string',
-            'email' => [
-                            'required',
-                            'email',
-                            'max:255',
-                            Rule::unique('users', 'email')->ignore($userId),
-                        ],
-            'phoneNumber' => [
-                            'required',
-                            'string',
-                            'min:10',
-                            'max:17',
-                            Rule::unique('users', 'phone')->ignore($userId),
-                        ],
-        ]);
+    public function update(Request $request)
+    {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $user->full_name = $request->fullName;
-        $user->email = $request->email;
-        $user->phone = $request->phoneNumber;
-        $user->save();
+        $userId = $user->id;
 
+        $request->validate([
+            'user_photo' => 'sometimes|nullable|image|max:5120',
+            'fullName' => 'sometimes|required|string',
+            'email' => [
+                'sometimes',
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($userId),
+            ],
+            'phone' => [
+                'sometimes',
+                'required',
+                'string',
+                'min:10',
+                'max:17',
+                Rule::unique('users', 'phone')->ignore($userId),
+            ],
+        ]);
+
+        if ($request->hasFile('user_photo')) {
+            if ($user->user_photo && Storage::disk('s3')->exists($user->user_photo)) {
+                Storage::disk('s3')->delete($user->user_photo);
+            }
+
+            $path = $request->file('user_photo')->store('user_photo', 's3');
+            $user->user_photo = $path;
+        }
+
+        if ($request->filled('fullName')) {
+            $user->full_name = $request->input('fullName');
+        }
+
+        if ($request->filled('email')) {
+            $user->email = $request->input('email');
+        }
+
+        if ($request->filled('phone')) {
+            $user->phone = $request->input('phone');
+        }
+
+        $user->save();
+        $userPhotoUrl = null;
+        if (!empty($user->user_photo) && $user->user_photo !== '') {
+            $userPhotoUrl = Storage::disk('s3')->temporaryUrl(
+                $user->user_photo,
+                Carbon::now()->addMinutes(10)
+            );
+        }
+        return response()->json(['message' => 'Profile updated successfully', 'user_photo'=> $userPhotoUrl]);
     }
+
 
 
 }

@@ -44,6 +44,7 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
 Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/getUser', [UserController::class, 'getUser']);
+    Route::patch('/user/change-password', [UserController::class, 'changePassword']);
 
     Route::get("/profile", [ProfileController::class, 'show']);
     Route::patch("/profile", [ProfileController::class, 'update']);
@@ -97,6 +98,7 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
 
 
 
+    Route::patch("/company", [CompanyController::class, 'editCompany']);
     Route::post("/department", [CompanyController::class, 'addDepartment']);
     Route::patch("/department", [CompanyController::class, 'editDepartment']);
     Route::delete("/department", [CompanyController::class, 'deleteDepartment']);

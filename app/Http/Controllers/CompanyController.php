@@ -9,8 +9,8 @@ use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
-
 
 class CompanyController extends Controller
 {
@@ -34,6 +34,31 @@ class CompanyController extends Controller
         ", [$companyId]);
     }
 
+    public function editCompany(Request $request){
+        
+        $companyId = Auth::user()->company_id;
+        $request->validate([
+            'company_name' => 'required|string',
+        ]);
+
+         if (!$companyId) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        $company = Company::where('company_id',$companyId)->first();
+
+        if (!$company) {
+            return response()->json(['message' => 'Company data not found'], 404);
+        }
+
+        // Update nama perusahaan
+        $company->name = $request->input('company_name');
+        $company->save();
+
+        return response()->json(['message' => 'Company name updated successfully'], 200);
+
+    }
+
     public function addDepartment(Request $request){
         $companyId = Auth::user()->company_id;
         $request->validate([
@@ -49,12 +74,12 @@ class CompanyController extends Controller
             return response()->json(['message' => 'Department already exist'], 422);
         }
 
-        Department::create([
+        $department = Department::create([
             'name' => $request->input('department_name'),
             'company_id' => $companyId,
         ]);
 
-        return response()->json(['message' => 'Department created successfully']);
+        return response()->json(['message' => 'Department created successfully', 'department_id' => $department->id,]);
     }
 
     public function editDepartment(Request $request){
@@ -146,11 +171,11 @@ class CompanyController extends Controller
         }
 
         // Simpan posisi
-        Position::create([
+        $position = Position::create([
             'department_id' => $request->department_id,
             'name' => $request->position_name,
         ]);
-        return response()->json(['message' => 'Position created successfully'], 200);
+        return response()->json(['message' => 'Position created successfully', 'position_id' => $position->id,], 200);
     }
 
     public function editPosition(Request $request){
