@@ -102,6 +102,23 @@ class CheckClockController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
+        // SELECT 
+        //     e.id AS data_id,
+        //     e.employee_id AS id_employee,
+        //     CONCAT(e.first_name, \' \', e.last_name) AS name,
+        //     ck.check_clock_date,
+        //     p.name AS position,
+        //     ccs.name AS worktype,
+        //     MAX(CASE WHEN pd.check_clock_type = \'in\' THEN pd.check_clock_time END) AS clock_in,
+        //     MAX(CASE WHEN pd.check_clock_type = \'out\' THEN pd.check_clock_time END) AS clock_out
+        // FROM employees e
+        // JOIN positions p ON e.position_id = p.id
+        // LEFT JOIN check_clocks ck ON ck.employee_id = e.id
+        // LEFT JOIN present_detail_cc pd ON pd.ck_id = ck.id
+        // LEFT JOIN check_clock_settings ccs ON ccs.id = ck.ck_setting_id
+        // WHERE e.company_id = ?
+        // GROUP BY e.id, e.employee_id, e.first_name, e.last_name, p.name, ccs.name, ck.check_clock_date
+        // ORDER BY e.first_name ASC;
         $query = '
         SELECT 
             e.id AS data_id,
@@ -124,7 +141,7 @@ class CheckClockController extends Controller
         WHERE e.company_id = ?
         GROUP BY e.id, e.employee_id, e.first_name, e.last_name, p.name, ccs.name, ck.check_clock_date
         ORDER BY e.first_name ASC
-            ';
+        ';
 
         $data = DB::select($query, [$companyId]);
 
@@ -234,7 +251,7 @@ class CheckClockController extends Controller
                     ]);
 
                     DB::commit();
-                    return response()->json(['success' => ['message' => 'Check clock with clock-in recorded successfully.']], 201);
+                    return response()->json(['success' => ['message' => 'Check clock with clock-in recorded successfully.']], 200);
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return response()->json(['errors' => ['message' => $e->getMessage()]], 500);
@@ -336,47 +353,6 @@ class CheckClockController extends Controller
             DB::rollBack();
             return response()->json(['errors' => ['message' => $e->getMessage()]], 500);
         }
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(CheckClock $checkClock)
-    {
-        return response()->json($checkClock);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, CheckClock $checkClock)
-    {
-        $validator = Validator::make($request->all(), [
-            'employee_id' => 'sometimes|required',
-            'check_clock_type' => 'sometimes|required|string|in:in,out,break_start,break_ended,permit,sick,leave', // Enum validation for 'in' and 'out'
-            'check_clock_date' => 'sometimes|required|date',
-            'check_clock_time' => 'sometimes|required|date_format:H:i:s', // Corrected to validate time format
-            'latitude' => 'sometimes|string',
-            'longitude' => 'sometimes|string',
-            'evidence' => 'sometimes|string',
-            'status' => 'sometimes|required|string|in:pending,approved,rejected', // Enum validation for status
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 422);
-        }
-
-        $checkClock->update($request->all());
-        return response()->json($checkClock);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(CheckClock $checkClock)
-    {
-        $checkClock->delete();
-        return response()->json(['message' => 'Deleted successfully']);
     }
 
     public function approval(Request $request, string $checkClock)

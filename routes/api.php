@@ -45,15 +45,18 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/getUser', [UserController::class, 'getUser']);
     
-    // Resource routes
+    // CC api
     Route::resource('check-clocks', CheckClockController::class);
     Route::get('cc-employee-data', [CheckClockController::class, 'getEmployeeData']);
     Route::post('reject-check-clock', [CheckClockController::class, 'reject']);
-    // Route::resource('check-clock-settings', CheckClockSettingController::class);
+    Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
+
+    // cc times
     Route::resource('check-clock-setting-times', CheckClockSettingTimesController::class);
     
+    // cc setting location
     Route::post('check-clock-rule', [CheckClockSettingController::class, 'update']);
-    Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
+    
     //payment
     Route::get('/payment-history', [PaymentController::class, 'index']);
     Route::get('payment', [PaymentController::class, 'createInvoice'])->name('payment');

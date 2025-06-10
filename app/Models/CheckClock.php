@@ -17,6 +17,7 @@ class CheckClock extends Model
         'check_clock_date',
         'status',
         'status_approval',
+        'reject_reason'
     ];
 
     /**

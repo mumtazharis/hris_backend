@@ -61,7 +61,7 @@ class DashboardController extends Controller
             join employees e on e.id = cc.employee_id
             where cc.check_clock_date::date = CURRENT_DATE
             AND e.company_id = ?
-        ", [Auth::user()->company_id]);
+        ",  [$companyId]);
     }
 
     public function getAttendance(string $companyId){
@@ -74,7 +74,7 @@ class DashboardController extends Controller
             join employees e on e.id = cc.employee_id
             where cc.check_clock_date::date = CURRENT_DATE
             and e.company_id = ?
-        ", [Auth::user()->company_id]);
+        ",  [$companyId]);
     }
 
     public function getOvertimeStatus(string $companyId)
@@ -88,7 +88,7 @@ class DashboardController extends Controller
             join employees e on e.id = o.employee_id
             where o.date::date = CURRENT_DATE
             and e.company_id = ?
-        ", [Auth::user()->company_id]);
+        ",  [$companyId]);
     }
 
     public function getEMployeeAge(string $companyId){
@@ -111,14 +111,16 @@ class DashboardController extends Controller
        return DB::select("
             select
                 e.first_name || ' ' || e.last_name as \"Name\",
-                to_char(cc.check_clock_date, 'HH24:MI') as \"Time\",
+                pdc.check_clock_time as \"Time\",
                 p.name as \"Position\"
             from check_clocks cc
+            join present_detail_cc pdc on pdc.ck_id = cc.id
             join employees e on cc.employee_id = e.id
             join positions p on e.position_id = p.id
-            where cc.status = 'present'
+            where cc.status = 'Present'
+            and pdc.check_clock_type = 'in'
             and e.company_id = ?
-        ", [Auth::user()->company_id]);
+        ",  [$companyId]);
     }
 
     public function getEmployeeWorkStatus(string $companyId){
