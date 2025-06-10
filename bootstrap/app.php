@@ -44,13 +44,13 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Fallback for ALL other exceptions
-        $exceptions->renderable(function (Throwable $e, Request $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Unknown error occurred.',
-                ], 500);
-            }
-        });
+        // $exceptions->renderable(function (Throwable $e, Request $request) {
+        //     if ($request->is('api/*')) {
+        //         return response()->json([
+        //             'message' => 'Unknown error occurred.',
+        //         ], 500);
+        //     }
+        // });
  
     })
     ->create();

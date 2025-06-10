@@ -17,6 +17,7 @@ class UserSeeder extends Seeder
             [
                 'company_id' => 'COMP001',
                 'full_name' => 'Admin User',
+                'user_photo' => 'employee_photo/2oDFeREVekwUBKoAomLqKVJsPcDtfVuoFVbPuJyr.jpg',
                 'email' => 'admin@example.com',
                 'phone' => '081234567890',
                 'password' => Hash::make('password123'),

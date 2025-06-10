@@ -30,7 +30,7 @@ class EmployeeController extends Controller
     $hrUser = Auth::user();
     $companyId = $hrUser->company_id;
 
-    $summary = DB::select("
+        $summary = DB::select("
         SELECT
             COUNT(*) AS \"Total Employee\",
             COUNT(*) FILTER (

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('company_id')->nullable();
             $table->foreign('company_id')->references('company_id')->on('companies');
+            $table->string('user_photo')->nullable();
             $table->string('full_name')->nullable();
             $table->string('email')->unique()->nullable();
             $table->string('phone')->unique()->nullable();
