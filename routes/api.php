@@ -125,5 +125,6 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
 Route::middleware('auth:sanctum','role:employee')->group(function () {
     Route::get('check-clock', [EmployeeCheckClockControllerEmp::class, 'index']);
     Route::post('check-clock', [EmployeeCheckClockControllerEmp::class, 'store']);
+    Route::get('check-clockin', [EmployeeCheckClockControllerEmp::class, 'checkClockIn']);
     Route::get("/employee/dashboard", [EmployeeDashboardController::class, 'dashboard']);
 });
