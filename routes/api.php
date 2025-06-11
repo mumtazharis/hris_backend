@@ -9,6 +9,7 @@ use App\Http\Controllers\CheckClockSettingTimesController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\employee\DashboardController as EmployeeDashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FormDataController;
 use App\Http\Controllers\MailTest;
@@ -116,6 +117,5 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
 
 // ROLE EMPLOYEE
 Route::middleware('auth:sanctum','role:employee')->group(function () {
-
-
+    Route::get("/employee/dashboard", [EmployeeDashboardController::class, 'dashboard']);
 });
