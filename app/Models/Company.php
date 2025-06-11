@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Company extends Model
 {
     protected $table = 'companies';
-    protected $fillable = ['name', 'company_id','plan_id'];
+    protected $fillable = ['name', 'company_id', 'plan_id', 'max_annual_leave', 'max_weekly_overtime'];
 
     public function user(){
         return $this->hasMany(User::class, 'company_id', 'company_id');

@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
                 'auth_provider' => 'local',
             ],
             [
-                'company_id' => 'COMP002',
+                'company_id' => 'COMP001',
                 'full_name' => 'Employee One',
                 'password' => Hash::make('password123'),
                 'role' => 'employee',

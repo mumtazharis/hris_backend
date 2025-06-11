@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('submitter_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('ck_setting_id')->nullable()->constrained('check_clock_settings');
             $table->date('check_clock_date');
-            $table->enum('status', ['Present', 'Sick Leave', 'Annual Leave'])->default('Present');
+            $table->enum('status', ['Present', 'Sick Leave', 'Annual Leave', 'Absent'])->default('Present');
             $table->enum('status_approval', ['Approved', 'Pending', 'Rejected'])->default('Pending');
             $table->text('reject_reason')->nullable();
             $table->timestamps();

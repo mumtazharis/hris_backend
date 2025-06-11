@@ -21,7 +21,7 @@ class OvertimeSeeder extends Seeder
                 'total_hour' => 1
             ],
             [
-                'employee_id' => 'EMP005',
+                'employee_id' => 'EMP004',
                 'overtime_setting_id' => 5,
                 'date' => '2025-10-10',
                 'total_hour' => 2
@@ -33,13 +33,13 @@ class OvertimeSeeder extends Seeder
                 'total_hour' => 2
             ],
             [
-                'employee_id' => 'EMP009',
+                'employee_id' => 'EMP007',
                 'overtime_setting_id' => 5,
                 'date' => '2025-10-10',
                 'total_hour' => 3
             ],
             [
-                'employee_id' => 'EMP010',
+                'employee_id' => 'EMP008',
                 'overtime_setting_id' => 5,
                 'date' => '2025-10-10',
                 'total_hour' => 4
