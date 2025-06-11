@@ -124,7 +124,7 @@ class AuthController extends Controller
 
         if (!$employee || !$employee->user) {
             return response()->json([
-                'errors' => ['message' => 'Invalid Employee ID, Company, or Password1']
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
             ], 422);
         }
 
@@ -133,14 +133,14 @@ class AuthController extends Controller
         // Cek apakah company_id cocok
         if ($user->company_id != $request->id_company) {
             return response()->json([
-                'errors' => ['message' => 'Invalid Employee ID, Company, or Password2']
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
             ], 422);
         }
 
         // Cek password
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
-                'errors' => ['message' => 'Invalid Employee ID, Company, or Password3']
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
             ], 422);
         }
 
