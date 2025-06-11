@@ -4,11 +4,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CheckClockController;
+use App\Http\Controllers\CheckClockControllerEmp;
 use App\Http\Controllers\CheckClockSettingController;
 use App\Http\Controllers\CheckClockSettingTimesController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\employee\CheckClockControllerEmp as EmployeeCheckClockControllerEmp;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FormDataController;
 use App\Http\Controllers\MailTest;
@@ -37,6 +39,8 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('/xendit/webhook', [PaymentController::class, 'handle']);
     // Route::get('/payment', [DocumentController::class, 'payment']);
     // Route::get('/employees/export-csv', [EmployeeController::class, 'exportCsv'])->name('employees.exportCsv');
+
+    Route::get('server-time', [EmployeeCheckClockControllerEmp::class, 'getServerTime']);
 });
 
 
@@ -46,7 +50,9 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::get('/getUser', [UserController::class, 'getUser']);
     
     // CC api
-    Route::resource('check-clocks', CheckClockController::class);
+    // Route::resource('check-clocks', CheckClockController::class);
+    Route::get('check-clocks', [CheckClockController::class, 'index']);
+    Route::post('check-clocks',[ CheckClockController::class, 'store']);
     Route::get('cc-employee-data', [CheckClockController::class, 'getEmployeeData']);
     Route::post('reject-check-clock', [CheckClockController::class, 'reject']);
     Route::put('check-clock-approval/{id}', [CheckClockController::class, 'approval']);
@@ -101,6 +107,6 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
 
 // ROLE EMPLOYEE
 Route::middleware('auth:sanctum','role:employee')->group(function () {
-
-
+    Route::get('check-clock', [EmployeeCheckClockControllerEmp::class, 'index']);
+    Route::post('check-clock', [EmployeeCheckClockControllerEmp::class, 'store']);
 });

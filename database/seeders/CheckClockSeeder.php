@@ -20,43 +20,41 @@ class CheckClockSeeder extends Seeder
         $statuses = ['Present', 'Sick Leave', 'Annual Leave'];
         $approvalStatuses = ['Approved', 'Pending', 'Rejected'];
 
+        // Define date range (e.g., last 7 days)
+        $startDate = Carbon::now()->subDays(6);
+        $endDate = Carbon::now();
+
         foreach ($companyIds as $companyId) {
-            // Get active employees of the company
             $employeeIds = DB::table('employees')
                 ->where('company_id', $companyId)
                 ->where('employee_status', 'Active')
                 ->pluck('id')
                 ->toArray();
 
-            // Get clock settings for the company
             $ckSettingIds = DB::table('check_clock_settings')
                 ->where('company_id', $companyId)
                 ->pluck('id')
                 ->toArray();
 
-            // Skip if no data
             if (empty($employeeIds) || empty($ckSettingIds)) {
                 continue;
             }
 
-            $forcedRejectedIds = Arr::random($employeeIds, min(3, count($employeeIds)));
-
-            // Force one employee to always be 'Present'
-            $presentEmployeeId = Arr::random($employeeIds);
-
             foreach ($employeeIds as $employeeId) {
-                $status = $employeeId === $presentEmployeeId ? 'Present' : Arr::random($statuses);
-                $approval = in_array($employeeId, $forcedRejectedIds) ? 'Pending' : Arr::random($approvalStatuses);
+                foreach (Carbon::parse($startDate)->daysUntil($endDate) as $date) {
+                    $status = Arr::random($statuses);
+                    $approval = Arr::random($approvalStatuses);
 
-                CheckClock::create([
-                    'employee_id' => $employeeId,
-                    'submitter_id' => Arr::random($employeeIds),
-                    'ck_setting_id' => Arr::random($ckSettingIds),
-                    'check_clock_date' => Carbon::now()->toDateString(),
-                    'status' => $status,
-                    'status_approval' => $approval,
-                    'reject_reason' => $approval === 'Rejected' ? 'No reason provided' : null,
-                ]);
+                    CheckClock::create([
+                        'employee_id' => $employeeId,
+                        'submitter_id' => $employeeId,
+                        'ck_setting_id' => Arr::random($ckSettingIds),
+                        'check_clock_date' => $date->toDateString(),
+                        'status' => $status,
+                        'status_approval' => $status === 'Present' ? 'Approved' : $approval,
+                        'reject_reason' => $approval === 'Rejected' ? 'No reason provided' : null,
+                    ]);
+                }
             }
         }
     }

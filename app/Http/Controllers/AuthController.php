@@ -112,29 +112,36 @@ class AuthController extends Controller
     }
 
     public function loginEmployee(Request $request){
+
+        $request->validate([
+            'id_company' => 'required|string',
+            'id_employee' => 'required|string',
+            'password' => 'required|string'
+        ]);
+
         // Cari employee berdasarkan employee_id
-        $employee = Employee::where('employee_id', $request->employee_id)->first();
+        $employee = Employee::where('employee_id', $request->id_employee)->first();
 
         if (!$employee || !$employee->user) {
             return response()->json([
-                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
-            ], 401);
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password1']
+            ], 422);
         }
 
         $user = $employee->user;
 
         // Cek apakah company_id cocok
-        if ($user->company_id != $request->company_id) {
+        if ($user->company_id != $request->id_company) {
             return response()->json([
-                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
-            ], 401);
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password2']
+            ], 422);
         }
 
         // Cek password
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
-                'errors' => ['message' => 'Invalid Employee ID, Company, or Password']
-            ], 401);
+                'errors' => ['message' => 'Invalid Employee ID, Company, or Password3']
+            ], 422);
         }
 
         // Jika berhasil login
