@@ -10,6 +10,7 @@ class PresentDetail extends Model
 
     protected $fillable = [
         'ck_id',
+        'ck_times_id',
         'check_clock_type',
         'check_clock_time',
         'latitude',

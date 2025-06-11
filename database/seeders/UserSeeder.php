@@ -77,6 +77,14 @@ class UserSeeder extends Seeder
             ],
             [
                 'company_id' => 'COMP002',
+                'full_name' => 'Employee Six',
+                'password' => Hash::make('password123'),
+                'role' => 'employee',
+                'is_profile_complete' => true,
+                'auth_provider' => 'local',
+            ],
+            [
+                'company_id' => 'COMP002',
                 'full_name' => 'Employee Seven',
                 'password' => Hash::make('password123'),
                 'role' => 'employee',
