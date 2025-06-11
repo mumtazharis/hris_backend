@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Employee;
 use App\Models\Company;
+use App\Models\Overtime;
+use App\Models\OvertimeFormula;
+use App\Models\OvertimeSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -49,9 +52,13 @@ class AuthController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
-            'phone' => 'required|numeric|digits_between:10,15|unique:users,phone',
             'company_name' => 'required|string|max:50',
-            Rule::unique('users', 'phone')->ignore($user->id),
+            'phone' => [
+                    'required',
+                    'string',
+                    'max:17',
+                    Rule::unique('users', 'phone')->ignore($user->id),
+                ],
         ]);
 
         
@@ -69,12 +76,36 @@ class AuthController extends Controller
             ]);
 
             $user->update([
-                'company_id' => $company->id,
+                'company_id' => $company->company_id,
                 'full_name' => $request->first_name . ' ' . $request->last_name,
                 'phone' => $request->phone,
                 'is_profile_complete' => true,
             ]);
-    
+            
+            $overtimeSetting = OvertimeSetting::create([
+                'company_id' => $company->company_id,
+                'name' => 'Weekday Overtime Government',
+                'type' => 'Government Regulation',
+                'category' => 'Regular Weekday',
+                'working_days' => '5 days',
+                'status' => 'Active'
+            ]);
+
+            OvertimeFormula::insert([
+            [
+              'setting_id' => $overtimeSetting->id,
+              'hour_start' => 0,
+              'hour_end' => 1,
+              'interval_hours' => null,
+              'formula' => '1.5',  
+            ],
+            [
+              'setting_id' => $overtimeSetting->id,
+              'hour_start' => 1,
+              'hour_end' => 24,
+              'interval_hours' => null,
+              'formula' => '2',  
+            ],]);
             // Commit jika semua berhasil
             DB::commit();
     
@@ -214,10 +245,10 @@ class AuthController extends Controller
                     'is_profile_complete' => $user->is_profile_complete,
                 ]);
             } else {
-                return response()->json(['errors' => ['message' => 'Invalid ID Token']], 400);
+                return response()->json(['errors' => ['message' => 'Invalid ID Token']], 401);
             }
         } catch (Exception $e) {
-            return response()->json(['errors' => ['message' => 'Verification failed: ' . $e->getMessage()]], 400);
+            return response()->json(['errors' => ['message' => 'Verification failed: ' . $e->getMessage()]], 401);
         }
     }
 

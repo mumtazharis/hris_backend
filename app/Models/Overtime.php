@@ -13,7 +13,8 @@ class Overtime extends Model
         'date',
         'total_hour',
         'payroll',
-        'status'
+        'status',
+        'rejection_reason',
     ];
     
     public function employee(){

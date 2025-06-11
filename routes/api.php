@@ -73,6 +73,7 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     // ], 200);
     Route::get('bank', [FormDataController::class, 'getBank']);
     Route::get('department-position', [FormDataController::class, 'getDepartmentPosition']);
+    Route::get('employee-overtime-form-data', [FormDataController::class, 'getEmployee']);
     Route::get('dashboard', [DashboardController::class, 'dashboard']);
 
     Route::get('/employees', [EmployeeController::class, 'index']);
@@ -90,14 +91,15 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::get('/documents/download/{id}' ,[DocumentController::class, 'download']);
 
 
-    Route::get("/overtime_settings", [OvertimeSettingController::class, 'index']);
-    Route::post("/overtime_settings", [OvertimeSettingController::class, 'store']);
-    Route::put("/overtime_settings/{id}", [OvertimeSettingController::class, 'update']);
-    Route::delete("/overtime_settings/{id}", [OvertimeSettingController::class, 'delete']);
+    Route::get("/overtime-settings", [OvertimeSettingController::class, 'index']);
+    Route::post("/overtime-settings", [OvertimeSettingController::class, 'store']);
+    Route::put("/overtime-settings/{id}", [OvertimeSettingController::class, 'update']);
+    Route::delete("/overtime-settings/{id}", [OvertimeSettingController::class, 'delete']);
+    Route::patch('/overtime-settings/status', [OvertimeSettingController::class, 'changeStatus']);
 
     Route::get("/overtime", [OvertimeController::class, 'index']);
     Route::post("/overtime", [OvertimeController::class, 'create']);
-    Route::patch("/overtime/{id}", [OvertimeController::class, 'approval']);
+    Route::patch("/overtime/approval", [OvertimeController::class, 'approval']);
     Route::delete("/overtime/{id}", [OvertimeController::class, 'delete']);
 
     Route::get("/company", [CompanyController::class, 'show']);

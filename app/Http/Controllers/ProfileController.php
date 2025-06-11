@@ -13,7 +13,9 @@ class ProfileController extends Controller
 {
     public function show(){
         $user = Auth::user();
-
+         if (!$user) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
         $userPhotoUrl = null;
         if (!empty($user->user_photo) && $user->user_photo !== '') {
             $userPhotoUrl = Storage::disk('s3')->temporaryUrl(

@@ -15,6 +15,7 @@ class OvertimeSetting extends Model
         'type',
         'category',
         'working_days',
+        'status'
     ];
 
     public function overtime(){
