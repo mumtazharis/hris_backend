@@ -21,6 +21,7 @@ class OvertimeController extends Controller
 
         return DB::select("
             SELECT 
+                o.id,
                 e.employee_id, 
                 CONCAT(e.first_name, ' ', e.last_name) AS name, 
                 os.name AS overtime_name, 
@@ -40,32 +41,99 @@ class OvertimeController extends Controller
         ", [$companyId]);
     }
 
-    public function create(Request $request){
+    // public function create(Request $request){
+    //     $hrUser = Auth::user();
+    //     $companyId = $hrUser->company_id;
+    //     if (!$hrUser || !$companyId) {
+    //         return response()->json(['message' => 'HR user not authenticated or company_id not found.'], 403);
+    //     }
+
+    //     $validatedData = $request->validate([
+    //         'employee_id' => 'required|string',
+    //         'overtime_setting_id' => 'required',
+    //         'date' => 'required|date',
+    //         'total_hour' => 'required|numeric|min:0'
+    //     ]);
+
+    //     // Ambil dan validasi employee
+    //     $employee = Employee::where('employee_id', $validatedData['employee_id'])->first();
+    //     if (!$employee || $employee->company_id !== $companyId) {
+    //         return response()->json(['message' => 'Unauthorized: Employee not found or not in the same company.'], 403);
+    //     }
+
+    //     // Ambil dan validasi overtime setting
+    //     $overtimeSetting = OvertimeSetting::find($validatedData['overtime_setting_id']);
+    //     if (!$overtimeSetting || ($overtimeSetting->company_id !== $companyId && $overtimeSetting->company_id !== null)) {
+    //         return response()->json(['message' => 'Unauthorized: Overtime setting not found or not in the same company.'], 403);
+    //     }
+
+    //     if ($overtimeSetting->type === 'Flat') {
+    //         $formula = OvertimeFormula::where('setting_id', $overtimeSetting->id)->first();
+    //         if (!$formula) {
+    //             return response()->json(['message' => 'Formula not found for Flat overtime setting.'], 400);
+    //         }
+
+    //         $minInterval = $formula->interval_hours ?: 1;
+    //         if ($validatedData['total_hour'] < $minInterval) {
+    //             return response()->json([
+    //                 'message' => "Total hour must be at least {$minInterval} for this overtime setting."
+    //             ], 422);
+    //         }
+
+    //         $validatedData['payroll'] = $this->countFlat($validatedData['total_hour'], $overtimeSetting->id);
+    //     } else {
+    //         $validatedData['payroll'] = $this->countGoverment($validatedData['total_hour'], $overtimeSetting->id, $employee->salary);
+    //     }
+
+    //     $overtime = Overtime::create($validatedData);
+
+    //     return response()->json([
+    //         'message' => 'Overtime created successfully',
+    //         'data' => $overtime
+    //     ], 201);
+
+
+    // }
+    public function create(Request $request)
+    {
         $hrUser = Auth::user();
         $companyId = $hrUser->company_id;
+
         if (!$hrUser || !$companyId) {
             return response()->json(['message' => 'HR user not authenticated or company_id not found.'], 403);
         }
 
+        // Tolak jika overtime_setting_id dikirim dari frontend
+        if ($request->has('overtime_setting_id')) {
+            return response()->json(['message' => 'Overtime setting ID should not be provided. It is determined automatically.'], 422);
+        }
+
+        // Validasi input TANPA overtime_setting_id
         $validatedData = $request->validate([
             'employee_id' => 'required|string',
-            'overtime_setting_id' => 'required',
             'date' => 'required|date',
             'total_hour' => 'required|numeric|min:0'
         ]);
 
-        // Ambil dan validasi employee
+        // Validasi employee
         $employee = Employee::where('employee_id', $validatedData['employee_id'])->first();
         if (!$employee || $employee->company_id !== $companyId) {
             return response()->json(['message' => 'Unauthorized: Employee not found or not in the same company.'], 403);
         }
 
-        // Ambil dan validasi overtime setting
-        $overtimeSetting = OvertimeSetting::find($validatedData['overtime_setting_id']);
-        if (!$overtimeSetting || ($overtimeSetting->company_id !== $companyId && $overtimeSetting->company_id !== null)) {
-            return response()->json(['message' => 'Unauthorized: Overtime setting not found or not in the same company.'], 403);
+        // Cari overtime setting dengan company_id dan status Active
+        $overtimeSetting = OvertimeSetting::where('company_id', $companyId)
+            ->where('status', 'Active')
+            ->first();
+
+        if (!$overtimeSetting) {
+            return response()->json(['message' => 'No active overtime setting found for this company.'], 404);
         }
 
+        // Tambahkan overtime_setting_id ke data yang tervalidasi
+        $validatedData['overtime_setting_id'] = $overtimeSetting->id;
+
+        // Hitung payroll
         if ($overtimeSetting->type === 'Flat') {
             $formula = OvertimeFormula::where('setting_id', $overtimeSetting->id)->first();
             if (!$formula) {
@@ -81,17 +149,20 @@ class OvertimeController extends Controller
 
             $validatedData['payroll'] = $this->countFlat($validatedData['total_hour'], $overtimeSetting->id);
         } else {
-            $validatedData['payroll'] = $this->countGoverment($validatedData['total_hour'], $overtimeSetting->id, $employee->salary);
+            $validatedData['payroll'] = $this->countGoverment(
+                $validatedData['total_hour'],
+                $overtimeSetting->id,
+                $employee->salary
+            );
         }
 
+        // Buat overtime record
         $overtime = Overtime::create($validatedData);
 
         return response()->json([
             'message' => 'Overtime created successfully',
             'data' => $overtime
         ], 201);
-
-
     }
 
     private function countFlat($total_hour, $setting_id){
@@ -140,7 +211,8 @@ class OvertimeController extends Controller
         return round($totalPayroll);
     }
 
-    public function approval(Request $request, $id){
+    public function approval(Request $request){
+       
         $hrUser = Auth::user();
         $companyId = $hrUser->company_id;
         if (!$hrUser || !$companyId) {
@@ -148,20 +220,30 @@ class OvertimeController extends Controller
         }
 
         $validatedData = $request->validate([
-            'status' => 'required|in:Approved,Rejected'
+            'overtime_id' => 'required|exists:overtime,id',
+            'status' => 'required|in:Approved,Rejected',
+            'reason' => 'sometimes|string'
         ]);
 
-        $overtime = Overtime::with('employee')->find($id);
+        $overtime = Overtime::with('employee')->find($validatedData['overtime_id']);
 
         if (!$overtime || !$overtime->employee || $overtime->employee->company_id !== $companyId) {
             return response()->json(['message' => 'Unauthorized or overtime record not found.'], 403);
         }
+
+      
         // Validasi status harus masih Pending
         if ($overtime->status !== 'Pending') {
             return response()->json(['message' => 'Only overtime requests with status Pending can be approved or rejected.'], 422);
         }
+          
         // Update status
         $overtime->status = $validatedData['status'];
+       
+        if (array_key_exists('reason', $validatedData)) {
+            $overtime->rejection_reason = $validatedData['reason'];
+        }
+        //   return response()->json(['message' => 'ok.'], 200);
         $overtime->save();
 
         return response()->json(['message' => 'Overtime status updated successfully.']);

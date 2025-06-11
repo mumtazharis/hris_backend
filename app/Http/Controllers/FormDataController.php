@@ -24,4 +24,14 @@ class FormDataController extends Controller
             select * from banks
         ");
     }
+
+    public function getEmployee(){
+        $hrUser = Auth::user();
+        $companyId = $hrUser->company_id;
+        return DB::select("
+            select e.employee_id, e.first_name || ' ' || e.last_name as full_name 
+            from employees e
+            where e.company_id = ? 
+        ", [$companyId]);
+    }
 }

@@ -16,9 +16,9 @@ class OvertimeSettingController extends Controller
         $companyId = $hrUser->company_id;
     
         $overtimes = DB::select("
-            select os.id, os.name, os.type, os.category, os.working_days  
+            select os.id, os.name, os.type, os.category, os.working_days, os.status 
             from overtime_settings os
-            where (os.company_id = ? or os.company_id is null) and os.deleted_at is null 
+            where os.company_id = ? and os.deleted_at is null 
         ", [$companyId]);
 
         $result = [];
@@ -55,6 +55,7 @@ class OvertimeSettingController extends Controller
                 'type' => $overtime->type,
                 'category' => $overtime->category,
                 'working_days' => $overtime->working_days,
+                'status' =>$overtime->status,
                 'formulas' => $formatted,
             ];
         }
@@ -78,6 +79,7 @@ class OvertimeSettingController extends Controller
         $overtime = collect($validatedData)->except(['rate', 'interval_hours'])->all();
         $overtime['company_id'] = $companyId;
         $overtime['type'] = 'Flat';
+        $overtime['status'] = 'Inactive';
         $formula['formula'] = $request['rate'];
         $formula['interval_hours'] = $request['interval_hours'];
         DB::beginTransaction();
@@ -161,12 +163,46 @@ class OvertimeSettingController extends Controller
         if (!$overtime) {
             return response()->json(['message' => 'Only flat-type overtime setting can be deleted or it does not exist.'], 404);
         }
+        if ($overtime->status === 'Active') {
+            return response()->json(['message' => 'Active overtime setting cannot be deleted.'], 400);
+        }
 
         $overtime->delete();
 
         return response()->json(['message' => 'Overtime setting has been deleted successfully.'], 200);
     }
 
+    public function changeStatus(Request $request)
+    {
+        $hrUser = Auth::user();
+        $companyId = $hrUser->company_id;
 
+        if (!$hrUser || !$companyId) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $overtimeSettingId = $request->input('overtime_setting_id');
+
+        if (!$overtimeSettingId) {
+            return response()->json(['message' => 'Missing overtime_setting_id'], 400);
+        }
+
+        // Update all settings to "Inactive" for this company
+        DB::table('overtime_settings')
+            ->where('company_id', $companyId)
+            ->update(['status' => 'Inactive']);
+
+        // Set the selected one to "Active"
+        $updated = DB::table('overtime_settings')
+            ->where('company_id', $companyId)
+            ->where('id', $overtimeSettingId)
+            ->update(['status' => 'Active']);
+
+        if ($updated) {
+            return response()->json(['message' => 'Overtime setting updated successfully.']);
+        } else {
+            return response()->json(['message' => 'Overtime setting not found or not updated.'], 400);
+        }
+    }
 
 }
