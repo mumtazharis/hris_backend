@@ -11,6 +11,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\employee\CheckClockControllerEmp as EmployeeCheckClockControllerEmp;
+use App\Http\Controllers\employee\DashboardController as EmployeeDashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FormDataController;
 use App\Http\Controllers\MailTest;
@@ -48,6 +49,11 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
 Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/getUser', [UserController::class, 'getUser']);
+
+    Route::patch('/user/change-password', [UserController::class, 'changePassword']);
+
+    Route::get("/profile", [ProfileController::class, 'show']);
+    Route::patch("/profile", [ProfileController::class, 'update']);
     
     // CC api
     // Route::resource('check-clocks', CheckClockController::class);
@@ -101,12 +107,23 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::delete("/overtime/{id}", [OvertimeController::class, 'delete']);
 
     Route::get("/company", [CompanyController::class, 'show']);
-    Route::get("/profile", [ProfileController::class, 'show']);
-    Route::get("/getCompanyDepPos", [ProfileController::class, 'getCompanyDepPos']);
+   
+    Route::get("/getCompanyDepPos", [CompanyController::class, 'getCompanyDepPos']);
+
+
+
+    Route::patch("/company", [CompanyController::class, 'editCompany']);
+    Route::post("/department", [CompanyController::class, 'addDepartment']);
+    Route::patch("/department", [CompanyController::class, 'editDepartment']);
+    Route::delete("/department", [CompanyController::class, 'deleteDepartment']);
+    Route::post("/position", [CompanyController::class, 'addPosition']);
+    Route::patch("/position", [CompanyController::class, 'editPosition']);
+    Route::delete("/position", [CompanyController::class, 'deletePosition']);
 });
 
 // ROLE EMPLOYEE
 Route::middleware('auth:sanctum','role:employee')->group(function () {
     Route::get('check-clock', [EmployeeCheckClockControllerEmp::class, 'index']);
     Route::post('check-clock', [EmployeeCheckClockControllerEmp::class, 'store']);
+    Route::get("/employee/dashboard", [EmployeeDashboardController::class, 'dashboard']);
 });

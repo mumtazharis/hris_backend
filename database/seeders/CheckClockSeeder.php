@@ -17,7 +17,7 @@ class CheckClockSeeder extends Seeder
     public function run(): void
     {
         $companyIds = DB::table('companies')->pluck('company_id')->toArray();
-        $statuses = ['Present', 'Sick Leave', 'Annual Leave'];
+        $statuses = ['Present', 'Sick Leave', 'Annual Leave', 'Absent'];
         $approvalStatuses = ['Approved', 'Pending', 'Rejected'];
 
         // Define date range (e.g., last 7 days)
