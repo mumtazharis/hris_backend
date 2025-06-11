@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
-{   
+{
     public function dashboard()
     {
         $hrUser = Auth::user();
@@ -30,7 +30,8 @@ class DashboardController extends Controller
             'employeeWorkYear' => $this->getEmployeeWorkYear($companyId)
         ]);
     }
-    public function getEmployeeCount(string $companyId){
+    public function getEmployeeCount(string $companyId)
+    {
         return DB::select("
             SELECT
                 COUNT(*) AS \"Total Employee\",
@@ -48,7 +49,6 @@ class DashboardController extends Controller
             JOIN users u ON e.user_id = u.id
             WHERE e.company_id = ?
         ", [$companyId]);
-
     }
     public function getApprovalStatus(string $companyId)
     {
@@ -64,16 +64,30 @@ class DashboardController extends Controller
         ",  [$companyId]);
     }
 
-    public function getAttendance(string $companyId){
+    public function getAttendance(string $companyId)
+    {
         return DB::select("
-            select
-                count(*) filter (where cc.status = 'Present') as \"On Time\",
-                count(*) filter (where cc.status = 'Late') as \"Late\",
-                count(*) filter (where cc.status = 'Absent') as \"Absent\"
-            from check_clocks cc
-            join employees e on e.id = cc.employee_id
-            where cc.check_clock_date::date = CURRENT_DATE
-            and e.company_id = ?
+            SELECT
+    COUNT(*) FILTER (
+        WHERE cc.status = 'Absent'
+    ) AS \"Absent\",
+    COUNT(*) FILTER (
+        WHERE pdc.check_clock_type = 'in'
+        AND pdc.check_clock_time < ccst.clock_in
+        AND pdc.check_clock_time >= ccst.min_clock_in
+    ) AS \"On Time\",
+    COUNT(*) FILTER (
+        WHERE pdc.check_clock_type = 'in'
+        AND pdc.check_clock_time >= ccst.clock_in
+        AND pdc.check_clock_time <= ccst.max_clock_in
+    ) AS \"Late\"
+    FROM check_clocks cc
+    JOIN employees e ON e.id = cc.employee_id
+    LEFT JOIN present_detail_cc pdc ON pdc.ck_id = cc.id
+    LEFT JOIN check_clock_setting_times ccst ON ccst.ck_setting_id = cc.ck_setting_id
+        AND LOWER(ccst.day) = LOWER(TO_CHAR(cc.check_clock_date, 'Day'))
+    WHERE cc.check_clock_date::date = CURRENT_DATE
+    AND e.company_id = ?
         ",  [$companyId]);
     }
 
@@ -91,7 +105,8 @@ class DashboardController extends Controller
         ",  [$companyId]);
     }
 
-    public function getEMployeeAge(string $companyId){
+    public function getEMployeeAge(string $companyId)
+    {
         return DB::select("
             SELECT
                 COUNT(*) FILTER (WHERE usia BETWEEN 21 AND 30) AS \"21-30\",
@@ -107,8 +122,9 @@ class DashboardController extends Controller
         ", [$companyId]);
     }
 
-    public function getLateEmployee(string $companyId){
-       return DB::select("
+    public function getLateEmployee(string $companyId)
+    {
+        return DB::select("
             select
                 e.first_name || ' ' || e.last_name as \"Name\",
                 pdc.check_clock_time as \"Time\",
@@ -123,7 +139,8 @@ class DashboardController extends Controller
         ",  [$companyId]);
     }
 
-    public function getEmployeeWorkStatus(string $companyId){
+    public function getEmployeeWorkStatus(string $companyId)
+    {
         return DB::select("
             select 
                 COUNT(*) filter (where e.contract_type = 'Permanent') as \"Permanent\",
@@ -133,10 +150,10 @@ class DashboardController extends Controller
             JOIN users u ON e.user_id = u.id
             WHERE e.company_id = ?
         ", [$companyId]);
-
     }
 
-    public function getEmployeeGender(string $companyId){
+    public function getEmployeeGender(string $companyId)
+    {
         return DB::select("
             select
                 count(*) filter (where e.gender = 'Male') as \"Male\",
@@ -147,7 +164,8 @@ class DashboardController extends Controller
         ", [$companyId]);
     }
 
-    public function getEmployeeMaritalStatus(string $companyId){
+    public function getEmployeeMaritalStatus(string $companyId)
+    {
         return DB::select("
             select
                 count(*) filter (where e.marital_status = 'Single') as \"Single\",
@@ -160,7 +178,8 @@ class DashboardController extends Controller
         ", [$companyId]);
     }
 
-    public function getEmployeeReligion(string $companyId){
+    public function getEmployeeReligion(string $companyId)
+    {
         return DB::select("
             select
                 count(*) filter (where e.religion = 'Islam') as \"Islam\",
@@ -175,7 +194,8 @@ class DashboardController extends Controller
         ", [$companyId]);
     }
 
-    public function getEmployeeWorkYear(string $companyId){
+    public function getEmployeeWorkYear(string $companyId)
+    {
         return DB::select("
              SELECT
                 COUNT(*) FILTER (WHERE year <=1) AS \"0-1\",

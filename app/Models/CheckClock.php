@@ -14,6 +14,7 @@ class CheckClock extends Model
         'employee_id',
         'submitter_id',
         'ck_setting_id',
+        'position',
         'check_clock_date',
         'status',
         'status_approval',

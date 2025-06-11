@@ -27,7 +27,7 @@ class CheckClockController extends Controller
 
         $checkClocks = DB::table('check_clocks as cc')
             ->join('employees as e', 'cc.employee_id', '=', 'e.id')
-            ->join('positions as p', 'e.position_id', '=', 'p.id')
+            // ->join('positions as p', 'e.position_id', '=', 'p.id')
             ->join('check_clock_settings as ccs', 'cc.ck_setting_id', '=', 'ccs.id')
             ->join('check_clock_setting_times as ccst', function ($join) {
                 $join->on('ccst.ck_setting_id', '=', 'ccs.id')
@@ -44,9 +44,10 @@ class CheckClockController extends Controller
                 'cc.employee_id',
                 'e.first_name',
                 'e.last_name',
-                'p.name',
+                'cc.position',
                 'cc.check_clock_date',
-                'ccs.name'
+                'ccs.name',
+                'e.employee_photo'
             ])
             ->select([
                 'cc.id as data_id',
@@ -54,7 +55,7 @@ class CheckClockController extends Controller
                 'e.employee_id as employee_number',
                 'cc.employee_id',
                 DB::raw("CONCAT(e.first_name, ' ', e.last_name) as employee_name"),
-                'p.name as position',
+                'cc.position as position',
                 'cc.check_clock_date as date',
                 'ccs.name as work_type',
                 DB::raw('MAX(CASE WHEN pdc.check_clock_type = \'in\' THEN pdc.check_clock_time END) as clock_in'),
@@ -67,18 +68,19 @@ class CheckClockController extends Controller
                 DB::raw('MAX(adc.evidence) as absent_evidence'),
                 DB::raw('MAX(cc.status_approval) as approval_status'),
                 DB::raw('MAX(cc.reject_reason) as reject_reason'),
+                DB::raw('e.employee_photo as employee_photo'),
                 DB::raw("
-        CASE
-            WHEN MAX(CASE WHEN pdc.check_clock_type = 'in' THEN pdc.check_clock_time END) IS NULL THEN cc.status
-            WHEN MAX(CASE WHEN pdc.check_clock_type = 'in' THEN pdc.check_clock_time END) < MIN(ccst.min_clock_in) THEN 'Invalid (Too Early)'
-            WHEN MAX(CASE WHEN pdc.check_clock_type = 'in' THEN pdc.check_clock_time END) <= MIN(ccst.clock_in) THEN 'On Time'
-            WHEN MAX(CASE WHEN pdc.check_clock_type = 'in' THEN pdc.check_clock_time END) <= MIN(ccst.max_clock_in) THEN 'Late'
-            ELSE 'Absent'
-        END as status
-    "),
+                    CASE
+                        WHEN MAX(CASE WHEN pdc.check_clock_type = 'in' THEN pdc.check_clock_time END) IS NULL THEN cc.status
+                        WHEN MAX(CASE WHEN pdc.check_clock_type = 'in' THEN pdc.check_clock_time END) < MIN(ccst.min_clock_in) THEN 'Invalid (Too Early)'
+                        WHEN MAX(CASE WHEN pdc.check_clock_type = 'in' THEN pdc.check_clock_time END) <= MIN(ccst.clock_in) THEN 'On Time'
+                        WHEN MAX(CASE WHEN pdc.check_clock_type = 'in' THEN pdc.check_clock_time END) <= MIN(ccst.max_clock_in) THEN 'Late'
+                        ELSE 'Absent'
+                    END as status
+                "),
             ])
             ->orderBy('cc.check_clock_date', 'DESC')
-            ->orderBy('employee_name')
+            ->orderBy('cc.created_at', 'DESC')
             ->get();
 
         // Generate temporary S3 URLs
@@ -89,6 +91,10 @@ class CheckClockController extends Controller
 
             $item->absent_evidence_url = $item->absent_evidence
                 ? Storage::disk('s3')->temporaryUrl($item->absent_evidence, Carbon::now()->addMinutes(30))
+                : null;
+
+            $item->employee_photo_url = $item->employee_photo
+                ? Storage::disk('s3')->temporaryUrl($item->employee_photo, Carbon::now()->addMinutes(30))
                 : null;
 
             return $item;
@@ -133,6 +139,7 @@ class CheckClockController extends Controller
             SELECT *
             FROM check_clocks
             WHERE DATE(check_clock_date) = CURRENT_DATE
+            AND status_approval != \'Rejected\'
         ) ck ON ck.employee_id = e.id
         LEFT JOIN present_detail_cc pd ON pd.ck_id = ck.id
         LEFT JOIN check_clock_settings ccs ON ccs.id = ck.ck_setting_id
@@ -205,26 +212,52 @@ class CheckClockController extends Controller
 
         $evidencePath = null;
 
+        $positionName = DB::table('positions')
+            ->where('id', DB::table('employees')->where('id', $request->employee_id)->value('position_id'))
+            ->value('name');
+
+
         if ($request->status === 'Present') {
             if ($request->hasFile('evidence')) {
                 $evidencePath = $request->file('evidence')->store('evidence_present', 's3');
             }
+            // Create CheckClock and PresentDetail for 'in'
+            $ckSetting = \App\Models\CheckClockSetting::where('company_id', $companyId)
+                ->where('name', $request->ck_setting_name)->first();
+
+            if (!$ckSetting) {
+                return response()->json(['error' => ['message' => 'Invalid work type, should be either WFA or WFO.']], 422);
+            }
+
+            // find cc setting times
+            $dayName = strtolower(Carbon::parse($request->check_clock_date)->format('l')); // e.g., "Monday"
+
+            $settingTime = \App\Models\CheckClockSettingTimes::where('ck_setting_id', $ckSetting->id)
+                ->where('day', $dayName)
+                ->first();
+
+            if (!$settingTime) {
+                return response()->json([
+                    'errors' => ['message' => "No schedule settings found for {$dayName}."]
+                ], 422);
+            }
+
             if ($request->check_clock_type === 'in') {
                 // Check if CheckClock exists for this employee and date (with any PresentDetail)
                 $exists = CheckClock::where('employee_id', $request->employee_id)
                     ->whereDate('check_clock_date', \Carbon\Carbon::parse($request->check_clock_date)->toDateString())
+                    ->where('status_approval', ['Approved', 'Pending'])
                     ->exists();
 
                 if ($exists) {
                     return response()->json(['errors' => ['message' => 'This employee have already check clock today']], 422);
                 }
 
-                // Create CheckClock and PresentDetail for 'in'
-                $ckSetting = \App\Models\CheckClockSetting::where('company_id', $companyId)
-                    ->where('name', $request->ck_setting_name)->first();
+                $maxClockInTime = $settingTime->max_clock_in;
 
-                if (!$ckSetting) {
-                    return response()->json(['error' => ['message' => 'Invalid work type, should be either WFA or WFO.']], 422);
+                $status = $request->status;
+                if ($request->check_clock_time > $maxClockInTime) {
+                    $status = 'Absent'; // Assign Absent if clock-in time exceeds max clock-in time
                 }
 
                 DB::beginTransaction();
@@ -233,8 +266,9 @@ class CheckClockController extends Controller
                         'employee_id' => $request->employee_id,
                         'submitter_id' => $user,
                         'ck_setting_id' => $ckSetting->id,
+                        'position' => $positionName,
                         'check_clock_date' => $request->check_clock_date,
-                        'status' => $request->status,
+                        'status' => $status,
                         'status_approval' => $request->status_approval ?? 'Pending',
                         'reject_reason' => $request->reject_reason,
                     ]);
@@ -242,6 +276,7 @@ class CheckClockController extends Controller
                     PresentDetail::create([
                         'ck_id' => $checkClock->id,
                         'check_clock_type' => 'in',
+                        'ck_times_id' => $settingTime->id,
                         'check_clock_time' => $request->check_clock_time,
                         'latitude' => $request->latitude,
                         'longitude' => $request->longitude,
@@ -268,6 +303,7 @@ class CheckClockController extends Controller
                 PresentDetail::create([
                     'ck_id' => $checkClock->id,
                     'check_clock_type' => 'out',
+                    'ck_times_id' => $settingTime->id,
                     'check_clock_time' => $request->check_clock_time,
                     'latitude' => $request->latitude,
                     'longitude' => $request->longitude,
@@ -283,6 +319,7 @@ class CheckClockController extends Controller
             // Handle Sick Leave, Annual Leave as before
             $exists = CheckClock::where('employee_id', $request->employee_id)
                 ->whereDate('check_clock_date', \Carbon\Carbon::parse($request->check_clock_date)->toDateString())
+                ->where('status_approval', ['Approved', 'Pending'])
                 ->exists();
 
             if ($exists) {
@@ -308,6 +345,7 @@ class CheckClockController extends Controller
                     'employee_id' => $request->employee_id,
                     'submitter_id' => $user,
                     'ck_setting_id' => $ckSetting->id,
+                    'position' => $positionName,
                     'check_clock_date' => $request->check_clock_date,
                     'status' => $request->status,
                     'status_approval' => $statusApproval,

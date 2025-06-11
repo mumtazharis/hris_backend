@@ -42,6 +42,10 @@ class CheckClockSeeder extends Seeder
 
             foreach ($employeeIds as $employeeId) {
                 foreach (Carbon::parse($startDate)->daysUntil($endDate) as $date) {
+                    $positionName = DB::table('positions')
+                        ->where('id', DB::table('employees')->where('id', $employeeId)->value('position_id'))
+                        ->value('name');
+
                     $status = Arr::random($statuses);
                     $approval = Arr::random($approvalStatuses);
 
@@ -50,6 +54,7 @@ class CheckClockSeeder extends Seeder
                         'submitter_id' => $employeeId,
                         'ck_setting_id' => Arr::random($ckSettingIds),
                         'check_clock_date' => $date->toDateString(),
+                        'position' => $positionName,
                         'status' => $status,
                         'status_approval' => $status === 'Present' ? 'Approved' : $approval,
                         'reject_reason' => $approval === 'Rejected' ? 'No reason provided' : null,
