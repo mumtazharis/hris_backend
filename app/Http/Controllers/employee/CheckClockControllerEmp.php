@@ -67,7 +67,7 @@ class CheckClockControllerEmp extends Controller
                 // DB::raw('MAX(CASE WHEN pdc.check_clock_type = \'in\' THEN pdc.longitude END) as longitude'),
                 DB::raw('MAX(cc.reject_reason) as reject_reason'),
             ])
-            ->orderBy('cc.check_clock_date')
+            ->orderBy('cc.check_clock_date', 'DESC')
             ->get();
 
         $location = CheckClockSetting::select(

@@ -77,7 +77,7 @@ class CheckClockController extends Controller
         END as status
     "),
             ])
-            ->orderBy('cc.check_clock_date')
+            ->orderBy('cc.check_clock_date', 'DESC')
             ->orderBy('employee_name')
             ->get();
 
