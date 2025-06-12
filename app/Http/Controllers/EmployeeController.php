@@ -348,7 +348,8 @@ class EmployeeController extends Controller
             'exit_date' => [
                 'nullable',
                 'date',
-                'required_if:employee_status,Resign,Retire,Fired'
+                'required_if:employee_status,Resign,Retire,Fired',
+                'prohibited_if:employee_status,Active'
             ],
             'employee_status' => [
                 'sometimes',
