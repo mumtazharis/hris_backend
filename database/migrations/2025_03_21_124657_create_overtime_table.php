@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('total_hour');
             $table->integer('payroll')->nullable();
             $table->enum('status', ['Approved', 'Pending', 'Rejected'])->default('Pending');
+            $table->string('rejection_reason')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
