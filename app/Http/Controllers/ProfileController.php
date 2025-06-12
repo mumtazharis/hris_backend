@@ -29,6 +29,7 @@ class ProfileController extends Controller
             'phone' => $user->phone,
             'email' => $user->email,
             'company_name' => $user->company?->name,
+            'company_id' => $user->company_id
         ]);
     }
 
