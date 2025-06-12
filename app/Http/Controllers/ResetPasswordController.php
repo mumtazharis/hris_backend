@@ -39,7 +39,7 @@ class ResetPasswordController extends Controller
         $user->reset_token_expire = $resetTokenExpiresAt;
         $user->save();
         
-        $url = 'http://localhost:3000/';
+        $url = "https://hris.my.id/";
         
         $resetUrl = $url . '/sign-in/set-new-password?token=' . $resetToken;
 
