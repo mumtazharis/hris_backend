@@ -43,6 +43,7 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
 
 // ROLE ADMIN
 Route::middleware('auth:sanctum','role:admin')->group(function () {
+    Route::get('check-token-admin', [AuthController::class, 'checkToken']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/getUser', [UserController::class, 'getUser']);
 
