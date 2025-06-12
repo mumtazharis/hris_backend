@@ -123,6 +123,7 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
 
 // ROLE EMPLOYEE
 Route::middleware('auth:sanctum','role:employee')->group(function () {
+    Route::post('/logout-employee', [AuthController::class, 'logout']);
     Route::get('check-clock', [EmployeeCheckClockControllerEmp::class, 'index']);
     Route::post('check-clock', [EmployeeCheckClockControllerEmp::class, 'store']);
     Route::get('check-clockin', [EmployeeCheckClockControllerEmp::class, 'checkClockIn']);
