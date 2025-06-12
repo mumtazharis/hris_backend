@@ -306,4 +306,13 @@ class AuthController extends Controller
         }
     }
 
+    public function checkToken(){
+        $user = Auth::user();
+         if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json(['message' => 'Success'], 200);
+    }
+
 }
