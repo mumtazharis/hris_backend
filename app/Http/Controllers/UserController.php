@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -42,6 +43,35 @@ class UserController extends Controller
             'bill_status' => $currentMonthBill?->status,
             'bill_deadline' => ($currentMonthBill && $currentMonthBill->status !== 'paid') ? $currentMonthBill->deadline : null,
             'is_profile_complete' => $user->is_profile_complete,
+        ]);
+    }
+    
+    public function getUserEmployee(){
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if(!$user){
+            return response()->json(['Unauthorized'], 401);
+        }
+
+        $employee = Employee::where('user_id', $user->id)->where('employee_status', 'Active')->first();
+
+        if (!$employee) {
+            return response()->json(['Cannot find the employee data'], 404);
+        }
+
+        $userPhotoUrl = null;
+        if (!empty($user->user_photo) && $user->user_photo !== '') {
+            $userPhotoUrl = Storage::disk('s3')->temporaryUrl(
+                $user->user_photo,
+                Carbon::now()->addMinutes(10) // berlaku 10 menit
+            );
+        }
+
+        return response()->json([
+            'id_employee' => $employee->employee_id,
+            'photo_url' => $userPhotoUrl,
+            'full_name' => $employee->first_name . ' ' .  $employee->last_name,
+            'company_name' => $user->company->name,
         ]);
     }
 
