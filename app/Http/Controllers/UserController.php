@@ -38,6 +38,7 @@ class UserController extends Controller
             'full_name' => $user->full_name,
             'user_role' => $user->role,
             'company_name' => $user->company->name,
+            'company_id' => $user->company_id,
             'plan_name' => optional(optional($user->company)->billingPlan)->plan_name,
             'bill_period' => $currentMonthBill?->period,
             'bill_status' => $currentMonthBill?->status,

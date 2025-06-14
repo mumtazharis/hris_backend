@@ -137,31 +137,31 @@ class AuthController extends Controller
             return response()->json(['errors' => ['message' => 'Invalid E-mail or Password']], 401);
         }
 
-        $currentMonth = Carbon::now()->month;
-        $currentYear = Carbon::now()->year;
-        $currentMonthBill = $user->bills()
-            ->whereMonth('deadline', $currentMonth)
-            ->whereYear('deadline', $currentYear)
-            ->first();
+        // $currentMonth = Carbon::now()->month;
+        // $currentYear = Carbon::now()->year;
+        // $currentMonthBill = $user->bills()
+        //     ->whereMonth('deadline', $currentMonth)
+        //     ->whereYear('deadline', $currentYear)
+        //     ->first();
 
-        $userPhotoUrl = null;
-        if (!empty($user->user_photo) && $user->user_photo !== '') {
-            $userPhotoUrl = Storage::disk('s3')->temporaryUrl(
-                $user->user_photo,
-                Carbon::now()->addMinutes(10) // berlaku 10 menit
-            );
-        }
+        // $userPhotoUrl = null;
+        // if (!empty($user->user_photo) && $user->user_photo !== '') {
+        //     $userPhotoUrl = Storage::disk('s3')->temporaryUrl(
+        //         $user->user_photo,
+        //         Carbon::now()->addMinutes(10) // berlaku 10 menit
+        //     );
+        // }
         // Jika login berhasil, buat token dan kirimkan sebagai response
         return response()->json([
             'token' => $user->createToken('API Token')->plainTextToken,
-            'full_name' => $user->full_name,
-            'user_photo' => $userPhotoUrl,
-            'role' => $user->role,
+            // 'full_name' => $user->full_name,
+            // 'user_photo' => $userPhotoUrl,
+            // 'role' => $user->role,
             'is_profile_complete' => $user->is_profile_complete,
-            'plan_name' => optional(optional($user->company)->billingPlan)->plan_name,
-            'bill_period' => $currentMonthBill?->period,
-            'bill_status' => $currentMonthBill?->status,
-            'bill_deadline' => ($currentMonthBill && $currentMonthBill->status !== 'paid') ? $currentMonthBill->deadline : null,
+            // 'plan_name' => optional(optional($user->company)->billingPlan)->plan_name,
+            // 'bill_period' => $currentMonthBill?->period,
+            // 'bill_status' => $currentMonthBill?->status,
+            // 'bill_deadline' => ($currentMonthBill && $currentMonthBill->status !== 'paid') ? $currentMonthBill->deadline : null,
         ]);
     }
 
@@ -182,6 +182,11 @@ class AuthController extends Controller
             ], 422);
         }
 
+        if ($employee->employee_status !== 'Active') {
+            return response()->json([
+                'errors' => ['message' => 'Your employee status is not active. Please contact your administrator.']
+            ], 401);
+        }
         $user = $employee->user;
 
         // Cek apakah company_id cocok
@@ -304,6 +309,15 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json(['errors' => ['message' => 'Verification failed: ' . $e->getMessage()]], 400);
         }
+    }
+
+    public function checkToken(){
+        $user = Auth::user();
+         if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json(['message' => 'Success'], 200);
     }
 
 }

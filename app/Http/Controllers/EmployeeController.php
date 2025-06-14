@@ -345,11 +345,11 @@ class EmployeeController extends Controller
             ],
 
             'join_date' => 'sometimes|required|date',
-            // 'exit_date' => 'sometimes|nullable|date',
             'exit_date' => [
                 'nullable',
                 'date',
-                Rule::prohibitedIf(fn () => $employee->employee_status === 'Active'),
+                'required_if:employee_status,Resign,Retire,Fired',
+                'prohibited_if:employee_status,Active'
             ],
             'employee_status' => [
                 'sometimes',
