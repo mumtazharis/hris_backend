@@ -17,7 +17,8 @@ return new class extends Migration
             $table->foreign('employee_id')->references('employee_id')->on('employees')->onDelete('cascade');
             $table->foreignId('overtime_setting_id')->constrained('overtime_settings');
             $table->date('date');
-            $table->integer('total_hour');
+            $table->time('start_hour');
+            $table->time('end_hour');
             $table->integer('payroll')->nullable();
             $table->enum('status', ['Approved', 'Pending', 'Rejected'])->default('Pending');
             $table->string('rejection_reason')->nullable();

@@ -15,34 +15,20 @@ class OvertimeSeeder extends Seeder
     {
         Overtime::insert([
             [
+                'employee_id' => 'EMP001',
+                'overtime_setting_id' => 5,
+                'date' => '2025-10-10',
+                'start_hour' => '17:00',
+                'end_hour' => '23:00',
+                'payroll' => 300000
+            ],
+            [
                 'employee_id' => 'EMP003',
                 'overtime_setting_id' => 5,
                 'date' => '2025-10-10',
-                'total_hour' => 1
-            ],
-            [
-                'employee_id' => 'EMP004',
-                'overtime_setting_id' => 5,
-                'date' => '2025-10-10',
-                'total_hour' => 2
-            ],
-            [
-                'employee_id' => 'EMP006',
-                'overtime_setting_id' => 5,
-                'date' => '2025-10-10',
-                'total_hour' => 2
-            ],
-            [
-                'employee_id' => 'EMP007',
-                'overtime_setting_id' => 5,
-                'date' => '2025-10-10',
-                'total_hour' => 3
-            ],
-            [
-                'employee_id' => 'EMP008',
-                'overtime_setting_id' => 5,
-                'date' => '2025-10-10',
-                'total_hour' => 4
+                'start_hour' => '17:00',
+                'end_hour' => '20:00',
+                'payroll' => 150000
             ],
         ]);
     }
