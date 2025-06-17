@@ -13,38 +13,55 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function getUser(){
-        /** @var \App\Models\User $user */
+   public function getUser()
+    {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
-        if(!$user){
-            return response()->json(['Unauthorized'], 401);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
-        $currentMonth = Carbon::now()->month;
-        $currentYear = Carbon::now()->year;
-        $currentMonthBill = $user->bills()
-            ->whereMonth('deadline', $currentMonth)
-            ->whereYear('deadline', $currentYear)
-            ->first();
 
-        $userPhotoUrl = null;
-        if (!empty($user->user_photo) && $user->user_photo !== '') {
-            $userPhotoUrl = Storage::disk('s3')->temporaryUrl(
-                $user->user_photo,
-                Carbon::now()->addMinutes(10) // berlaku 10 menit
-            );
+        try {
+            $currentMonth = Carbon::now()->month;
+            $currentYear = Carbon::now()->year;
+
+            $currentMonthBill = null;
+            if (method_exists($user, 'bills')) {
+                $currentMonthBill = $user->bills()
+                    ->whereMonth('deadline', $currentMonth)
+                    ->whereYear('deadline', $currentYear)
+                    ->first();
+            }
+
+            $userPhotoUrl = null;
+            if (!empty($user->user_photo)) {
+                if (Storage::disk('s3')->exists($user->user_photo)) {
+                    $userPhotoUrl = Storage::disk('s3')->temporaryUrl(
+                        $user->user_photo,
+                        Carbon::now()->addMinutes(10)
+                    );
+                }
+            }
+
+            $company = $user->company;
+            $billingPlan = $company?->billingPlan;
+
+            return response()->json([
+                'photo_url' => $userPhotoUrl,
+                'full_name' => $user->full_name,
+                'user_role' => $user->role,
+                'company_name' => $company?->name,
+                'company_id' => $user->company_id,
+                'plan_name' => $billingPlan?->plan_name,
+                'bill_period' => $currentMonthBill?->period,
+                'bill_status' => $currentMonthBill?->status,
+                'bill_deadline' => ($currentMonthBill && $currentMonthBill->status !== 'paid') ? $currentMonthBill->deadline : null,
+                'is_profile_complete' => $user->is_profile_complete,
+            ]);
+        } catch (\Exception $e) {
+            
+            return response()->json(['is_profile_complete' => 'false'], 500);
         }
-        return response()->json([
-            'photo_url' => $userPhotoUrl,
-            'full_name' => $user->full_name,
-            'user_role' => $user->role,
-            'company_name' => $user->company->name,
-            'company_id' => $user->company_id,
-            'plan_name' => optional(optional($user->company)->billingPlan)->plan_name,
-            'bill_period' => $currentMonthBill?->period,
-            'bill_status' => $currentMonthBill?->status,
-            'bill_deadline' => ($currentMonthBill && $currentMonthBill->status !== 'paid') ? $currentMonthBill->deadline : null,
-            'is_profile_complete' => $user->is_profile_complete,
-        ]);
     }
     
     public function getUserEmployee(){
@@ -75,6 +92,7 @@ class UserController extends Controller
             'company_name' => $user->company->name,
         ]);
     }
+
 
     public function changePassword(Request $request){
         /** @var \App\Models\User $user */
