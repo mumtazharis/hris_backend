@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Employee;
 use App\Models\Overtime;
 use Illuminate\Http\Request;
 use App\Models\OvertimeFormula;
 use App\Models\OvertimeSetting;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +29,8 @@ class OvertimeController extends Controller
                 os.name AS overtime_name, 
                 os.type, 
                 o.date, 
-                total_hour, 
+                TO_CHAR(o.start_hour, 'HH24:MI') AS start_hour, 
+                TO_CHAR(o.end_hour, 'HH24:MI') AS end_hour, 
                 o.payroll,
                 o.status
             FROM 
@@ -112,7 +115,16 @@ class OvertimeController extends Controller
         $validatedData = $request->validate([
             'employee_id' => 'required|string',
             'date' => 'required|date',
-            'total_hour' => 'required|numeric|min:0'
+            'start_hour' => 'required|date_format:H:i',
+            'end_hour' => [
+                'required',
+                'date_format:H:i',
+                function ($attribute, $value, $fail) use ($request) {
+                    if (strtotime($value) <= strtotime($request->start_hour)) {
+                        $fail('End hour must be after start hour.');
+                    }
+                },
+            ],
         ]);
 
         // Validasi employee
@@ -132,7 +144,23 @@ class OvertimeController extends Controller
 
         // Tambahkan overtime_setting_id ke data yang tervalidasi
         $validatedData['overtime_setting_id'] = $overtimeSetting->id;
+        
+        $start = Carbon::createFromFormat('H:i', $validatedData['start_hour']);
+        $end = Carbon::createFromFormat('H:i', $validatedData['end_hour']);
+        $totalHour = $start->diffInMinutes($end) / 60;
 
+        if ($conflict = $this->hasOverlappingOvertime($validatedData['employee_id'], $validatedData['date'], $start, $end)) {
+            return response()->json([
+                'message' => "Overtime time range overlaps with an existing record ({$conflict->start_hour} - {$conflict->end_hour})."
+            ], 422);
+        }
+        
+        if ($this->hasExceededWeeklyOvertimeLimit($validatedData['employee_id'], Carbon::parse($validatedData['date']), $totalHour, $companyId)) {
+            return response()->json([
+                'message' => "Employee has exceeded the weekly overtime limit."
+            ], 422);
+        }
+     
         // Hitung payroll
         if ($overtimeSetting->type === 'Flat') {
             $formula = OvertimeFormula::where('setting_id', $overtimeSetting->id)->first();
@@ -141,16 +169,16 @@ class OvertimeController extends Controller
             }
 
             $minInterval = $formula->interval_hours ?: 1;
-            if ($validatedData['total_hour'] < $minInterval) {
+            if ($totalHour < $minInterval) {
                 return response()->json([
                     'message' => "Total hour must be at least {$minInterval} for this overtime setting."
                 ], 422);
             }
 
-            $validatedData['payroll'] = $this->countFlat($validatedData['total_hour'], $overtimeSetting->id);
+            $validatedData['payroll'] = $this->countFlat($totalHour, $overtimeSetting->id);
         } else {
             $validatedData['payroll'] = $this->countGoverment(
-                $validatedData['total_hour'],
+                $totalHour,
                 $overtimeSetting->id,
                 $employee->salary
             );
@@ -163,6 +191,37 @@ class OvertimeController extends Controller
             'message' => 'Overtime created successfully',
             'data' => $overtime
         ], 201);
+    }
+
+    private function hasOverlappingOvertime($employeeId, $date, $start, $end): ? Overtime {
+        return Overtime::where('employee_id', $employeeId)
+            ->where('status', 'Approved')
+            ->where('date', $date)
+            ->get()
+            ->first(function ($overtime) use ($start, $end) {
+                $existingStart = Carbon::createFromFormat('H:i:s', $overtime->start_hour);
+                $existingEnd = Carbon::createFromFormat('H:i:s', $overtime->end_hour);
+                return $start < $existingEnd && $end > $existingStart;
+            });
+    }
+
+    private function hasExceededWeeklyOvertimeLimit(string $employeeId, Carbon $date, float $newHours, string $companyId): ? string {
+        $startOfWeek = $date->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+        $endOfWeek = $date->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+
+        $weeklyTotal = Overtime::where('employee_id', $employeeId)
+            ->where('status', 'Approved')
+            ->whereBetween('date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+            ->get()
+            ->sum(function ($overtime) {
+                $start = Carbon::createFromFormat('H:i:s', $overtime->start_hour);
+                $end = Carbon::createFromFormat('H:i:s', $overtime->end_hour);
+                return $start->diffInMinutes($end) / 60;
+            });
+
+        $maxWeekly = Company::where('company_id', $companyId)->value('max_weekly_overtime') ?? 0;
+
+        return ($weeklyTotal + $newHours) > $maxWeekly;
     }
 
     private function countFlat($total_hour, $setting_id){
@@ -236,7 +295,40 @@ class OvertimeController extends Controller
         if ($overtime->status !== 'Pending') {
             return response()->json(['message' => 'Only overtime requests with status Pending can be approved or rejected.'], 422);
         }
-          
+        
+        if ($validatedData['status'] === 'Approved') {
+            $employeeId = $overtime->employee_id;
+            $date = Carbon::parse($overtime->date);
+            $start = Carbon::createFromFormat('H:i:s', $overtime->start_hour);
+            $end = Carbon::createFromFormat('H:i:s', $overtime->end_hour);
+            $totalHour = $start->diffInMinutes($end) / 60;
+
+            // Cek batas maxWeekly
+            if ($this->hasExceededWeeklyOvertimeLimit($employeeId, $date, $totalHour, $companyId)) {
+                return response()->json([
+                    'message' => "Employee has exceeded the weekly overtime limit."
+                ], 422);
+            }
+
+            // Cek overlap waktu
+            $existingOvertimes = Overtime::where('employee_id', $employeeId)
+                ->where('status', 'Approved')
+                ->where('date', $overtime->date)
+                ->where('id', '!=', $overtime->id) // Kecualikan dirinya sendiri
+                ->get();
+
+            foreach ($existingOvertimes as $existing) {
+                $existingStart = Carbon::createFromFormat('H:i:s', $existing->start_hour);
+                $existingEnd = Carbon::createFromFormat('H:i:s', $existing->end_hour);
+
+                if ($start < $existingEnd && $end > $existingStart) {
+                    return response()->json([
+                        'message' => "Overtime time range overlaps with an existing approved record ({$existing->start_hour} - {$existing->end_hour})."
+                    ], 422);
+                }
+            }
+        }
+
         // Update status
         $overtime->status = $validatedData['status'];
        

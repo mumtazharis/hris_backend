@@ -73,8 +73,8 @@ class OvertimeSettingController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|in:Regular Weekday,Shortday Holiday,Holiday',
-            'interval_hours' => 'required|numeric|max:24',
-            'rate' => 'required|numeric'
+            'interval_hours' => 'required|integer|min:1|max:24',
+            'rate' => 'required|integer|min:1'
         ]);
         $overtime = collect($validatedData)->except(['rate', 'interval_hours'])->all();
         $overtime['company_id'] = $companyId;
