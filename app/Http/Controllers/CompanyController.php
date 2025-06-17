@@ -39,6 +39,8 @@ class CompanyController extends Controller
         $companyId = Auth::user()->company_id;
         $request->validate([
             'company_name' => 'required|string',
+            'max_annual_leave' => 'required|integer|min:12',
+            'max_weekly_overtime' => 'required|integer|max:18|min:0'
         ]);
 
          if (!$companyId) {
@@ -53,6 +55,8 @@ class CompanyController extends Controller
 
         // Update nama perusahaan
         $company->name = $request->input('company_name');
+        $company->max_annual_leave = $request->input('max_annual_leave');
+        $company->max_weekly_overtime = $request->input('max_weekly_overtime');
         $company->save();
 
         return response()->json(['message' => 'Company name updated successfully'], 200);
