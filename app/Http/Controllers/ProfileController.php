@@ -29,7 +29,9 @@ class ProfileController extends Controller
             'phone' => $user->phone,
             'email' => $user->email,
             'company_name' => $user->company?->name,
-            'company_id' => $user->company_id
+            'company_id' => $user->company_id,
+            'max_annual_leave' => $user->company?->max_annual_leave,
+            'max_weekly_overtime' => $user->company?->max_weekly_overtime
         ]);
     }
 
