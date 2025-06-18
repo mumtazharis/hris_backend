@@ -57,5 +57,8 @@ class Employee extends Model
     public function document(){
         return $this->hasMany(Document::class, 'employee_id', 'employee_id');
     }
-
+public function employee()
+    {
+        return $this->hasOne(Employee::class, 'user_id');
+    }
 }
