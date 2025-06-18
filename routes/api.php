@@ -12,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\employee\CheckClockControllerEmp as EmployeeCheckClockControllerEmp;
 use App\Http\Controllers\employee\DashboardController as EmployeeDashboardController;
+use App\Http\Controllers\employee\OvertimeController as EmployeeOvertimeController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FormDataController;
 use App\Http\Controllers\MailTest;
@@ -133,4 +134,6 @@ Route::middleware('auth:sanctum','role:employee')->group(function () {
     Route::post('check-clock', [EmployeeCheckClockControllerEmp::class, 'store']);
     Route::get('check-clockin', [EmployeeCheckClockControllerEmp::class, 'checkClockIn']);
     Route::get("/employee/dashboard", [EmployeeDashboardController::class, 'dashboard']);
+    Route::get("/employee/overtime", [EmployeeOvertimeController::class, 'index']);
+    Route::post("/employee/overtime", [EmployeeOvertimeController::class, 'create']);
 });

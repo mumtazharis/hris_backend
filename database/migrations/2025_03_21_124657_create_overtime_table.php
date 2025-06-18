@@ -20,6 +20,7 @@ return new class extends Migration
             $table->time('start_hour');
             $table->time('end_hour');
             $table->integer('payroll')->nullable();
+            $table->string('evidence')->nullable();
             $table->enum('status', ['Approved', 'Pending', 'Rejected'])->default('Pending');
             $table->string('rejection_reason')->nullable();
             $table->timestamps();
