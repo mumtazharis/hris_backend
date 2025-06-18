@@ -11,6 +11,7 @@ use App\Models\OvertimeSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class OvertimeController extends Controller
 {
@@ -21,82 +22,50 @@ class OvertimeController extends Controller
             return response()->json(['message' => 'HR user not authenticated or company_id not found.'], 403);
         }
 
-        return DB::select("
-            SELECT 
-                o.id,
-                e.employee_id, 
-                CONCAT(e.first_name, ' ', e.last_name) AS name, 
-                os.name AS overtime_name, 
-                os.type, 
-                o.date, 
-                TO_CHAR(o.start_hour, 'HH24:MI') AS start_hour, 
-                TO_CHAR(o.end_hour, 'HH24:MI') AS end_hour, 
-                o.payroll,
-                o.status
-            FROM 
-                overtime o
-            JOIN 
-                employees e ON o.employee_id = e.employee_id
-            JOIN 
-                overtime_settings os ON o.overtime_setting_id = os.id
-            WHERE e.company_id = ?
+        $overtimes = DB::select("
+        SELECT 
+            o.id,
+            e.employee_id,
+            e.employee_photo,
+            o.evidence,
+            CONCAT(e.first_name, ' ', e.last_name) AS name, 
+            os.name AS overtime_name, 
+            os.type, 
+            o.date, 
+            TO_CHAR(o.start_hour, 'HH24:MI') AS start_hour, 
+            TO_CHAR(o.end_hour, 'HH24:MI') AS end_hour, 
+            o.payroll,
+            o.status
+        FROM 
+            overtime o
+        JOIN 
+            employees e ON o.employee_id = e.employee_id
+        JOIN 
+            overtime_settings os ON o.overtime_setting_id = os.id
+        WHERE 
+            e.company_id = ?
+    ", [$companyId]);
 
-        ", [$companyId]);
+    // Tambahkan AWS URL
+    foreach ($overtimes as &$overtime) {
+        // Generate employee photo URL
+        $overtime->employeePhoto = !empty($overtime->employee_photo)
+            ? Storage::disk('s3')->temporaryUrl($overtime->employee_photo, Carbon::now()->addMinutes(1000))
+            : null;
+
+        // Generate evidence file URL
+        $overtime->overtimeEvidenceUrl = !empty($overtime->evidence)
+            ? Storage::disk('s3')->temporaryUrl($overtime->evidence, Carbon::now()->addMinutes(1000))
+            : null;
+
+        // Optionally remove raw file path fields
+        unset($overtime->employee_photo);
+        unset($overtime->evidence);
     }
 
-    // public function create(Request $request){
-    //     $hrUser = Auth::user();
-    //     $companyId = $hrUser->company_id;
-    //     if (!$hrUser || !$companyId) {
-    //         return response()->json(['message' => 'HR user not authenticated or company_id not found.'], 403);
-    //     }
+    return response()->json($overtimes);
+    }
 
-    //     $validatedData = $request->validate([
-    //         'employee_id' => 'required|string',
-    //         'overtime_setting_id' => 'required',
-    //         'date' => 'required|date',
-    //         'total_hour' => 'required|numeric|min:0'
-    //     ]);
-
-    //     // Ambil dan validasi employee
-    //     $employee = Employee::where('employee_id', $validatedData['employee_id'])->first();
-    //     if (!$employee || $employee->company_id !== $companyId) {
-    //         return response()->json(['message' => 'Unauthorized: Employee not found or not in the same company.'], 403);
-    //     }
-
-    //     // Ambil dan validasi overtime setting
-    //     $overtimeSetting = OvertimeSetting::find($validatedData['overtime_setting_id']);
-    //     if (!$overtimeSetting || ($overtimeSetting->company_id !== $companyId && $overtimeSetting->company_id !== null)) {
-    //         return response()->json(['message' => 'Unauthorized: Overtime setting not found or not in the same company.'], 403);
-    //     }
-
-    //     if ($overtimeSetting->type === 'Flat') {
-    //         $formula = OvertimeFormula::where('setting_id', $overtimeSetting->id)->first();
-    //         if (!$formula) {
-    //             return response()->json(['message' => 'Formula not found for Flat overtime setting.'], 400);
-    //         }
-
-    //         $minInterval = $formula->interval_hours ?: 1;
-    //         if ($validatedData['total_hour'] < $minInterval) {
-    //             return response()->json([
-    //                 'message' => "Total hour must be at least {$minInterval} for this overtime setting."
-    //             ], 422);
-    //         }
-
-    //         $validatedData['payroll'] = $this->countFlat($validatedData['total_hour'], $overtimeSetting->id);
-    //     } else {
-    //         $validatedData['payroll'] = $this->countGoverment($validatedData['total_hour'], $overtimeSetting->id, $employee->salary);
-    //     }
-
-    //     $overtime = Overtime::create($validatedData);
-
-    //     return response()->json([
-    //         'message' => 'Overtime created successfully',
-    //         'data' => $overtime
-    //     ], 201);
-
-
-    // }
     public function create(Request $request)
     {
         $hrUser = Auth::user();
@@ -195,7 +164,7 @@ class OvertimeController extends Controller
 
     private function hasOverlappingOvertime($employeeId, $date, $start, $end): ? Overtime {
         return Overtime::where('employee_id', $employeeId)
-            ->where('status', 'Approved')
+            ->where('status', '!=', 'Rejected')
             ->where('date', $date)
             ->get()
             ->first(function ($overtime) use ($start, $end) {
@@ -281,7 +250,7 @@ class OvertimeController extends Controller
         $validatedData = $request->validate([
             'overtime_id' => 'required|exists:overtime,id',
             'status' => 'required|in:Approved,Rejected',
-            'reason' => 'sometimes|string'
+            'reason' => 'required|string'
         ]);
 
         $overtime = Overtime::with('employee')->find($validatedData['overtime_id']);

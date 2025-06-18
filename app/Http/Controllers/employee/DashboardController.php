@@ -156,9 +156,9 @@ class DashboardController extends Controller
         return DB::select("
             SELECT 
                 e.employee_id AS employee_id,
-                COALESCE(SUM(o.total_hour), 0) AS total_overtime_this_week,
+                FLOOR(COALESCE(SUM(EXTRACT(EPOCH FROM (o.end_hour - o.start_hour)) / 3600), 0)) AS total_overtime_this_week,
                 c.max_weekly_overtime,
-                c.max_weekly_overtime - COALESCE(SUM(o.total_hour), 0) AS remaining_overtime_hour
+                FLOOR(c.max_weekly_overtime - COALESCE(SUM(EXTRACT(EPOCH FROM (o.end_hour - o.start_hour)) / 3600), 0)) AS remaining_overtime_hour
             FROM employees e
             JOIN companies c ON e.company_id = c.company_id
             LEFT JOIN overtime o ON o.employee_id = e.employee_id 
