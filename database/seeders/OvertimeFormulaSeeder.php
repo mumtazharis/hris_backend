@@ -56,6 +56,48 @@ class OvertimeFormulaSeeder extends Seeder
               'interval_hours' => 3,
               'formula' => '150000',  
             ],
+            [
+              'setting_id' => 6,
+              'hour_start' => 0,
+              'hour_end' => 1,
+              'interval_hours' => null,
+              'formula' => '1.5',  
+            ],
+            [
+              'setting_id' => 6,
+              'hour_start' => 1,
+              'hour_end' => 24,
+              'interval_hours' => null,
+              'formula' => '2',  
+            ],
+            [
+              'setting_id' => 7,
+              'hour_start' => null,
+              'hour_end' => null,
+              'interval_hours' => 1,
+              'formula' => '100000',  
+            ],
+            [
+              'setting_id' => 8,
+              'hour_start' => null,
+              'hour_end' => null,
+              'interval_hours' => 2,
+              'formula' => '120000',  
+            ],
+            [
+              'setting_id' => 9,
+              'hour_start' => null,
+              'hour_end' => null,
+              'interval_hours' => 1,
+              'formula' => '130000',  
+            ],
+            [
+              'setting_id' => 10,
+              'hour_start' => null,
+              'hour_end' => null,
+              'interval_hours' => 3,
+              'formula' => '150000',  
+            ],
             
         ]);
     }

@@ -22,7 +22,7 @@ class CheckClockSeeder extends Seeder
 
         // Define date range (e.g., last 7 days)
         $startDate = Carbon::now()->subDays(6);
-        $endDate = Carbon::now();
+        $endDate = Carbon::now()->subDay();
 
         foreach ($companyIds as $companyId) {
             $employeeIds = DB::table('employees')

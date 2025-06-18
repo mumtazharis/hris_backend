@@ -30,6 +30,22 @@ class OvertimeSeeder extends Seeder
                 'end_hour' => '20:00',
                 'payroll' => 150000
             ],
+            [
+                'employee_id' => 'EMP008',
+                'overtime_setting_id' => 10,
+                'date' => '2025-10-10',
+                'start_hour' => '17:00',
+                'end_hour' => '23:00',
+                'payroll' => 300000
+            ],
+            [
+                'employee_id' => 'EMP009',
+                'overtime_setting_id' => 10,
+                'date' => '2025-10-10',
+                'start_hour' => '17:00',
+                'end_hour' => '20:00',
+                'payroll' => 150000
+            ],
         ]);
     }
 }

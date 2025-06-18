@@ -53,6 +53,46 @@ class OvertimeSettingSeeder extends Seeder
                 "category" => "Regular Weekday",
                 'working_days' => null,
                 'status' => 'Inactive'
+            ],
+            [
+                'company_id' => 'COMP002',
+                'name' => 'Weekday Overtime Government',
+                'type' => 'Government Regulation',
+                'category' => 'Regular Weekday',
+                'working_days' => '5 days',
+                'status' => 'Active'
+            ],
+            [
+                "company_id" => "COMP002",
+                "name" => "Flat 1",
+                "type" => "Flat",
+                "category" => "Regular Weekday",
+                'working_days' => null,
+                'status' => 'Inactive'
+            ],
+            [
+                "company_id" => "COMP002",
+                "name" => "Flat 2",
+                "type" => "Flat",
+                "category" => "Regular Weekday",
+                'working_days' => null,
+                'status' => 'Inactive'
+            ],
+            [
+                "company_id" => "COMP002",
+                "name" => "Flat 3",
+                "type" => "Flat",
+                "category" => "Regular Weekday",
+                'working_days' => null,
+                'status' => 'Inactive'
+            ],
+            [
+                "company_id" => "COMP002",
+                "name" => "Flat 4",
+                "type" => "Flat",
+                "category" => "Regular Weekday",
+                'working_days' => null,
+                'status' => 'Inactive'
             ]
         ]);
     }
