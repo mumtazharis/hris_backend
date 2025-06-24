@@ -14,7 +14,7 @@
 [![React](https://img.shields.io/badge/React-%2320232a.svg?logo=react&logoColor=%2361DAFB)](#)
 [![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000?logo=shadcnui&logoColor=fff)](#)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind%20CSS-%2338B2AC.svg?logo=tailwind-css&logoColor=white)](#)
-[![Contributors](https://img.shields.io/github/contributors/langodayyy/hris_frontend.svg)](https://github.com/langodayyy/hris_frontend/graphs/contributors)
+[![Contributors](https://img.shields.io/github/contributors/mumtazharis/hris_backend.svg)](https://github.com/mumtazharis/hris_backend/graphs/contributors)
 
 ---
 
