@@ -15,6 +15,7 @@ class Overtime extends Model
         'end_hour',
         'payroll',
         'status',
+        'evidence',
         'rejection_reason',
     ];
     
