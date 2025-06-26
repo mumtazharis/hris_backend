@@ -13,9 +13,11 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\employee\CheckClockControllerEmp as EmployeeCheckClockControllerEmp;
 use App\Http\Controllers\employee\DashboardController as EmployeeDashboardController;
 use App\Http\Controllers\employee\OvertimeController as EmployeeOvertimeController;
+use App\Http\Controllers\employee\NotificationController as EmployeeNotificationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FormDataController;
 use App\Http\Controllers\MailTest;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\OvertimeSettingController;
 use App\Http\Controllers\ResetPasswordController;
@@ -123,6 +125,11 @@ Route::middleware('auth:sanctum','role:admin')->group(function () {
     Route::post("/position", [CompanyController::class, 'addPosition']);
     Route::patch("/position", [CompanyController::class, 'editPosition']);
     Route::delete("/position", [CompanyController::class, 'deletePosition']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread', [NotificationController::class, 'unread']);
+    Route::post('/notifications/read/{id}', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });
 
 // ROLE EMPLOYEE
@@ -136,4 +143,9 @@ Route::middleware('auth:sanctum','role:employee')->group(function () {
     Route::get("/employee/dashboard", [EmployeeDashboardController::class, 'dashboard']);
     Route::get("/employee/overtime", [EmployeeOvertimeController::class, 'index']);
     Route::post("/employee/overtime", [EmployeeOvertimeController::class, 'create']);
+
+    Route::get('/employee/notifications', [EmployeeNotificationController::class, 'index']);
+    Route::get('/employee/notifications/unread', [EmployeeNotificationController::class, 'unread']);
+    Route::post('/employee/notifications/read/{id}', [EmployeeNotificationController::class, 'markAsRead']);
+    Route::post('/employee/notifications/read-all', [EmployeeNotificationController::class, 'markAllAsRead']);
 });
