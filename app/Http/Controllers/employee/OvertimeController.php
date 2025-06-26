@@ -44,6 +44,14 @@ class OvertimeController extends Controller
             JOIN 
                 overtime_settings os ON o.overtime_setting_id = os.id
             WHERE e.employee_id = ?
+            ORDER BY 
+                CASE o.status
+                    WHEN 'Pending' THEN 1
+                    WHEN 'Approved' THEN 2
+                    WHEN 'Rejected' THEN 3
+                    ELSE 4
+                END,
+            o.date DESC
         ", [$employeeId]);
 
         // Tambahkan AWS URL
