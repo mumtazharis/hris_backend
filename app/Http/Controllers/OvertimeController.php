@@ -45,6 +45,14 @@ class OvertimeController extends Controller
             overtime_settings os ON o.overtime_setting_id = os.id
         WHERE 
             e.company_id = ?
+        ORDER BY 
+            CASE o.status
+                WHEN 'Pending' THEN 1
+                WHEN 'Approved' THEN 2
+                WHEN 'Rejected' THEN 3
+                ELSE 4
+            END,
+        o.date DESC
     ", [$companyId]);
 
     // Tambahkan AWS URL
