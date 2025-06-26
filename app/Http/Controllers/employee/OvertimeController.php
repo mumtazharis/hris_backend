@@ -13,6 +13,8 @@ use App\Models\OvertimeSetting;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\Overtime;
+use App\Models\User;
+use App\Notifications\OvertimeRequestSubmitted;
 
 class OvertimeController extends Controller
 {
@@ -144,7 +146,10 @@ class OvertimeController extends Controller
         $validatedData['evidence'] = $path;
         $validatedData['employee_id'] = $user->employee->employee_id;
         $overtime = Overtime::create($validatedData);
-
+        $admins = User::where('role', 'admin')->where('company_id', $user->company_id)->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new OvertimeRequestSubmitted($user->full_name));
+        }
         return response()->json([
             'message' => 'Overtime created successfully',
             'data' => $overtime

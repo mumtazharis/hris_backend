@@ -8,6 +8,7 @@ use App\Models\Overtime;
 use Illuminate\Http\Request;
 use App\Models\OvertimeFormula;
 use App\Models\OvertimeSetting;
+use App\Notifications\OvertimeRequestApproval;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -250,7 +251,7 @@ class OvertimeController extends Controller
         $validatedData = $request->validate([
             'overtime_id' => 'required|exists:overtime,id',
             'status' => 'required|in:Approved,Rejected',
-            'reason' => 'required|string'
+            'reason' => 'required_if:status,Rejected|string|nullable',
         ]);
 
         $overtime = Overtime::with('employee')->find($validatedData['overtime_id']);
@@ -306,7 +307,9 @@ class OvertimeController extends Controller
         }
         //   return response()->json(['message' => 'ok.'], 200);
         $overtime->save();
-
+        if ($validatedData['status'] === 'Approved') {
+            $overtime->employee->user->notify(new OvertimeRequestApproval($hrUser->full_name, "Approved"));            
+        }
         return response()->json(['message' => 'Overtime status updated successfully.']);
     }
 
